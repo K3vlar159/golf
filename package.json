@@ -1,0 +1,20 @@
+{
+  "name": "pg-golf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.kpi.fei.tuke.sk:filip.krisak/pg-golf.git"
+  },
+  "private": true,
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.9"
+  }
+}
