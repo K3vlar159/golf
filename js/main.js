@@ -1,14 +1,16 @@
 var camera, scene, renderer, controls;
-var ground, ball
-let velocity = new THREE.Vector2();
-const gravity = -0.05;
-const ballRadius = 0.5;
+var ground, ball, terrain
+const ballRadius = 0.25;
 let isDragging = false;
 let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag start
 const launchStrength = 0.4; // Increased for more powerful launches
-const bounceDamping = 0.6; // Controls bounce height
-const friction = 0.98; // Friction to reduce sliding
+
 let guideLine; // To represent the pull direction and strength
+
+import { createTerrainMesh, terrainPoints } from './terrain.js';
+import { applyPhysics, velocity} from './physics.js';
+
+export { terrain, ball, ballRadius, isDragging };
 
 init();
 render();
@@ -26,8 +28,11 @@ function init() {
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
 
+   // controls = new THREE.OrbitControls( camera, renderer.domElement );
+
     scene = new THREE.Scene();
     addObjects();
+    console.log("Terrain Points:", terrainPoints);
 
     renderer.domElement.addEventListener('mousedown', onMouseDown);
     renderer.domElement.addEventListener('mousemove', onMouseMove);
@@ -37,63 +42,34 @@ function init() {
 function render() {
     requestAnimationFrame( render );
     renderer.render( scene, camera );
-    camera.lookAt(scene.position);
+    //camera.lookAt(ball.position);
+    //camera.position.set(ball.position.x, ball.position.y, 10);
     applyPhysics();
 }
 
 function addObjects(){
-    const groundGeometry = new THREE.PlaneGeometry(20, 1);
-    const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x228B22 });
-    ground = new THREE.Mesh(groundGeometry, groundMaterial);
-    ground.position.set(0, -2, 0);
-    scene.add(ground);
 
+    //ball
     const ballGeometry = new THREE.CircleGeometry(ballRadius, 32);
     const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
     ball = new THREE.Mesh(ballGeometry, ballMaterial);
     ball.position.set(0,5,0);
     scene.add(ball);
 
-    // Create a line to represent the pull direction
+    //line to represent the pull direction
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red color for the line
     const lineGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
     guideLine = new THREE.Line(lineGeometry, lineMaterial);
     scene.add(guideLine);
     guideLine.visible = false; // Initially hidden
-}
 
-function applyPhysics() {
-    if (!isDragging) {
-        // Apply gravity
-        velocity.y += gravity;
-        ball.position.x += velocity.x;
-        ball.position.y += velocity.y;
-
-        // Ground collision detection
-        if (ball.position.y - ballRadius <= ground.position.y + 0.5) {
-            ball.position.y = ground.position.y + 0.5 + ballRadius; // Adjust position above ground
-
-            // Bounce effect: reverse and dampen vertical velocity
-            velocity.y = -velocity.y * bounceDamping;
-
-            // Apply friction to horizontal movement on bounce
-            velocity.x *= friction;
-
-            // If horizontal speed is very low, stop the ball
-            if (Math.abs(velocity.x) < 0.01) {
-                velocity.x = 0;
-            }
-        }
-
-        // Prevent the ball from sinking into the ground
-        if (ball.position.y < ground.position.y + 0.5 + ballRadius) {
-            ball.position.y = ground.position.y + 0.5 + ballRadius; // Correct position
-        }
-    }
+    //procedurally generated terrain
+    terrain = createTerrainMesh(window.innerHeight);
+    scene.add(terrain);
 }
 
 function onMouseDown(event) {
-    const mouse = new THREE.Vector2(
+    let mouse = new THREE.Vector2(
         (event.clientX / window.innerWidth) * 2 - 1,
         -(event.clientY / window.innerHeight) * 2 + 1
     );
@@ -115,7 +91,7 @@ function onMouseDown(event) {
 function onMouseMove(event) {
     if (isDragging) {
         // Calculate mouse position relative to the scene
-        const mouse = new THREE.Vector2(
+        let mouse = new THREE.Vector2(
             (event.clientX / window.innerWidth) * 2 - 1,
             -(event.clientY / window.innerHeight) * 2 + 1
         );
