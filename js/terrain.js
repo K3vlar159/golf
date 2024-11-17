@@ -3,7 +3,7 @@ const terrainWidth = 40;
 const maxTerrainHeight = 10;
 const minTerrainHeight = -8;
 const detailLevel = 500; // Number of points for more smoothness
-let terrainPoints; // Store terrain points for external access
+export let terrainPoints = [];
 
 
 // Midpoint displacement function to create terrain
@@ -35,27 +35,22 @@ function generateTerrain(width, maxH, minH, detail) {
 }
 
 
-function createTerrainMesh() {
+export function createTerrainMesh() {
     const shape = new THREE.Shape();
     shape.moveTo(-terrainWidth / 2, minTerrainHeight);
 
-    // Generate terrain points using midpoint displacement (as before)
     const terrainVertices = generateTerrain(terrainWidth, maxTerrainHeight, minTerrainHeight, detailLevel);
     terrainVertices.forEach(point => {
         shape.lineTo(point.x, point.y);
     });
+
     shape.lineTo(terrainWidth / 2, minTerrainHeight);
     shape.lineTo(-terrainWidth / 2, minTerrainHeight);
 
-    // Get points for collision detection
-    terrainPoints = shape.getPoints(detailLevel); // Store points
+    terrainPoints = terrainVertices.map(v => ({ x: v.x, y: v.y }));
 
     const geometry = new THREE.ShapeGeometry(shape);
     const material = new THREE.MeshBasicMaterial({ color: 0x228B22, side: THREE.DoubleSide });
     return new THREE.Mesh(geometry, material);
 }
 
-
-
-// Export the function so main.js can access it
-export { createTerrainMesh, terrainPoints };

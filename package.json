@@ -12,6 +12,8 @@
   },
   "private": true,
   "dependencies": {
+    "matter-js": "^0.20.0",
+    "poly-decomp": "^0.3.0",
     "three": "^0.169.0"
   },
   "devDependencies": {
