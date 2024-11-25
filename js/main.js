@@ -3,7 +3,7 @@ var ground, ball, terrain
 const ballRadius = 0.25;
 let isDragging = false;
 let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag start
-const launchStrength = 0.4; // Increased for more powerful launches
+const launchStrength = 0.2; // Increased for more powerful launches
 
 let guideLine; // To represent the pull direction and strength
 
