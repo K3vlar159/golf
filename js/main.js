@@ -3,9 +3,9 @@ var ground, ball, terrain
 const ballRadius = 0.25; //0.25 default
 let isDragging = false;
 let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag start
-const launchStrength = 0.2; // Increased for more powerful launches
-const maxPullLength = 5;
-const lineLength = 2;
+const launchStrength = 0.4; // Increased for more powerful launches
+const maxPullLength = 2.5;
+//const lineLength = 2;
 const cameraSpeed = 0.05;
 
 let guideLine; // To represent the pull direction and strength
@@ -133,8 +133,8 @@ function onMouseMove(event) {
         let pullVector = new THREE.Vector3().subVectors(mousePos, pullOrigin);
 
         // Clamp the pull vector length to the maximum pull length
-        if (pullVector.length() > lineLength) {
-            pullVector.setLength(lineLength);
+        if (pullVector.length() > maxPullLength) {
+            pullVector.setLength(maxPullLength);
         }
 
         // Calculate the end point of the guide line in the opposite direction of the pull vector
