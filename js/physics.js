@@ -1,25 +1,26 @@
 let velocity = new THREE.Vector2();
-const gravity = -0.05;
-const friction = 0.98; // Friction to reduce sliding
-const bounceDamping = 0.6; // Controls bounce height
+const gravity = -0.02;
+const friction = 0.98;
+const groundedDamping = 0.8;
+const rollingFriction = 0.98;
+const velocityThreshold = 0.0005;
+const groundedThreshold = 0.01;
+const slopeFriction = 0.03; // Universal friction coefficient for slopes
 
 import { terrainPoints } from './terrain.js';
 import { terrain, ball, ballRadius, isDragging } from './main.js';
 
 export { applyPhysics, velocity };
 
-// Function to get the terrain height at a specific x-position
 function getTerrainHeightAt(x) {
     let closestPointLeft = null;
     let closestPointRight = null;
 
-    // Check if terrainPoints contains valid data
     if (!terrainPoints || terrainPoints.length === 0) {
         console.error("terrainPoints is empty or undefined.");
         return terrain.position.y;
     }
 
-    // Loop through terrainPoints to find closest left and right points
     terrainPoints.forEach(point => {
         if (point.x <= x && (!closestPointLeft || point.x > closestPointLeft.x)) {
             closestPointLeft = point;
@@ -29,79 +30,98 @@ function getTerrainHeightAt(x) {
         }
     });
 
-    // If both points have the same x-coordinate, return their y-value directly
     if (closestPointLeft && closestPointRight && closestPointLeft.x === closestPointRight.x) {
         return closestPointLeft.y;
     }
 
-    // Linear interpolation for height calculation if points are different
     if (closestPointLeft && closestPointRight) {
         const t = (x - closestPointLeft.x) / (closestPointRight.x - closestPointLeft.x);
         return closestPointLeft.y * (1 - t) + closestPointRight.y * t;
     }
 
-    // Fallback: If only one point is found, return its height
     if (closestPointLeft) return closestPointLeft.y;
     if (closestPointRight) return closestPointRight.y;
 
-    // Final fallback: Return default height if no points found
     return terrain.position.y;
 }
 
 function getTerrainSlopeAngleAt(x) {
-    const delta = 0.01; // Small offset for slope calculation
+    const delta = 0.01;
     const heightAtX1 = getTerrainHeightAt(x - delta);
     const heightAtX2 = getTerrainHeightAt(x + delta);
-
-    // Calculate the slope (angle) in radians using the difference in height
-    const slope = Math.atan2(heightAtX2 - heightAtX1, 2 * delta);
-    return slope;
+    return Math.atan2(heightAtX2 - heightAtX1, 2 * delta);
 }
 
+function isInValley(x, slopeAngle) {
+    const leftSlope = getTerrainSlopeAngleAt(x - 0.1);
+    const rightSlope = getTerrainSlopeAngleAt(x + 0.1);
+    return leftSlope < -0.1 && rightSlope > 0.1;
+}
 
+function handleGroundedState(slopeAngle, inValley) {
+    // Base force from gravity along the slope
+    // This naturally handles both uphill and downhill cases
+    const slopeForce = gravity * Math.sin(slopeAngle);
 
-// Update applyPhysics with terrain height collision detection
+    // Normal force perpendicular to the slope
+    const normalForce = gravity * Math.cos(slopeAngle);
+
+    // Apply force along the slope
+    velocity.x += slopeForce;
+
+    // Apply friction based on normal force and slope
+    const frictionForce = -Math.sign(velocity.x) * Math.abs(normalForce) * slopeFriction;
+    velocity.x += frictionForce;
+
+    // Additional rolling resistance based on slope steepness
+    const rollingResistance = 1 - (Math.abs(Math.sin(slopeAngle)) * 0.1);
+    velocity.x *= rollingResistance;
+
+    // Valley handling
+    if (inValley) {
+        velocity.x *= 0.95;
+        if (Math.abs(velocity.x) < velocityThreshold * 2) {
+            velocity.x = 0;
+        }
+    }
+
+    // Damp vertical velocity when grounded
+    velocity.y *= groundedDamping;
+
+    // Stop if barely moving
+    if (Math.abs(velocity.x) < velocityThreshold && Math.abs(velocity.y) < velocityThreshold) {
+        velocity.x = 0;
+        velocity.y = 0;
+    }
+}
+
 function applyPhysics() {
     if (!isDragging) {
-        // Apply gravity in the vertical direction
-        velocity.y += gravity;
-
-        // Get the terrain height and slope at the ball's current x-position
         const terrainHeight = getTerrainHeightAt(ball.position.x) + ballRadius;
-        const slopeAngle = getTerrainSlopeAngleAt(ball.position.x); // Calculate slope angle in radians
+        const slopeAngle = getTerrainSlopeAngleAt(ball.position.x);
+        const inValley = isInValley(ball.position.x, slopeAngle);
 
-        // Rotate velocity to align with slope
-        const gravityAlongSlope = gravity * Math.sin(slopeAngle);
-        const gravityPerpendicularToSlope = gravity * Math.cos(slopeAngle);
+        const distanceToGround = ball.position.y - terrainHeight;
+        const isGrounded = distanceToGround < groundedThreshold;
 
-        // Collision detection with terrain
-        if (ball.position.y - ballRadius <= terrainHeight)
-        {
-            ball.position.y = terrainHeight; // Adjust position above terrain
-
-            // Bounce effect: reverse and dampen vertical velocity
-            velocity.y = -velocity.y * bounceDamping;
-
-            // Adjust velocity along the slope
-            velocity.x += gravityAlongSlope; // Apply gravity in the x direction based on slope
-            velocity.y += gravityPerpendicularToSlope; // Adjust y velocity to simulate slope effect
-
-            // Apply friction to horizontal movement on bounce
-            velocity.x *= friction;
-
-            // If horizontal speed is very low, stop the ball
-            if (Math.abs(velocity.x) < 0.01) {
-                velocity.x = 0;
-            }
+        if (isGrounded) {
+            ball.position.y = terrainHeight;
+            handleGroundedState(slopeAngle, inValley);
+        } else {
+            velocity.y += gravity;
         }
 
-        // Update position based on velocity
+        // Update position
         ball.position.x += velocity.x;
         ball.position.y += velocity.y;
 
-        // Prevent the ball from sinking below terrain
-        if (ball.position.y < terrainHeight) {
-            ball.position.y = terrainHeight; // Correct position
+        // Prevent sinking
+        const finalTerrainHeight = getTerrainHeightAt(ball.position.x) + ballRadius;
+        if (ball.position.y < finalTerrainHeight) {
+            ball.position.y = finalTerrainHeight;
+            if (velocity.y < 0) {
+                velocity.y = 0;
+            }
         }
     }
 }

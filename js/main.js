@@ -1,9 +1,9 @@
-var camera, scene, renderer, controls;
-var ground, ball, terrain
+let camera, scene, renderer, controls;
+let ground, ball, terrain, hole, boosterr, bumperr
 const ballRadius = 0.25;
 let isDragging = false;
 let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag start
-const launchStrength = 0.4; // Increased for more powerful launches
+const launchStrength = 0.2; // Increased for more powerful launches
 
 let guideLine; // To represent the pull direction and strength
 
@@ -12,6 +12,7 @@ import { applyPhysics, velocity} from './physics.js';
 
 export { terrain, ball, ballRadius, isDragging };
 
+let waterPoints = [];
 init();
 render();
 
@@ -45,6 +46,10 @@ function render() {
     //camera.lookAt(ball.position);
     //camera.position.set(ball.position.x, ball.position.y, 10);
     applyPhysics();
+    birdie();
+    addWater(waterPoints);
+    booster();
+    bumper();
 }
 
 function addObjects(){
@@ -66,6 +71,13 @@ function addObjects(){
     //procedurally generated terrain
     terrain = createTerrainMesh(window.innerHeight);
     scene.add(terrain);
+
+    // golf hole
+    const holeGeometry = new THREE.CircleGeometry(0.25, 32);
+    const holeMaterial = new THREE.MeshBasicMaterial({color: 0x666699 });
+    hole = new THREE.Mesh(holeGeometry, holeMaterial);
+    hole.position.set(terrainPoints[25].x, terrainPoints[25].y, 0);
+    scene.add(hole);
 }
 
 function onMouseDown(event) {
@@ -139,4 +151,107 @@ function onMouseUp(event) {
         guideLine.visible = false;
         isDragging = false;
     }
+}
+
+function birdie() {
+    const ballPosition = ball.position;
+    const holePosition = hole.position;
+
+    const distance = ballPosition.distanceTo(holePosition);
+
+    if (distance <= hole.geometry.parameters.radius + ball.geometry.parameters.radius) {
+        scene.remove(ball);
+
+        ball.geometry.dispose();
+        ball.material.dispose();
+
+        console.log("Birdie!");
+    }
+}
+
+function addWater(waterPoints) {
+    const shape = new THREE.Shape();
+
+    waterPoints[0] = new THREE.Vector2(terrainPoints[5].x, terrainPoints[5].y)
+    waterPoints[1] = new THREE.Vector2(terrainPoints[10].x, terrainPoints[10].y);
+    waterPoints[2] = new THREE.Vector2(terrainPoints[10].x - 2, terrainPoints[10].y - 3);
+    waterPoints[3] = new THREE.Vector2(terrainPoints[5].x + 2, terrainPoints[5].y - 3);
+
+    shape.moveTo(waterPoints[0].x, waterPoints[0].y);
+    waterPoints.forEach(point => shape.lineTo(point.x, point.y));
+    shape.closePath();
+
+    const geometry = new THREE.ShapeGeometry(shape);
+    const material = new THREE.MeshBasicMaterial({ color: 0x0000ff, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+
+    const waterMesh = new THREE.Mesh(geometry, material);
+    scene.add(waterMesh);
+
+    const ballPosition = ball.position;
+    const waterPosition = waterMesh.position;
+
+    const distance = ballPosition.distanceTo(waterPosition);
+
+    if (distance <= waterMesh.geometry.parameters.radius + ball.geometry.parameters.radius) {
+        scene.remove(ball);
+
+        ball.geometry.dispose();
+        ball.material.dispose();
+
+        console.log("SPLASH!");
+    }
+}
+
+function booster() {
+    const booster = new THREE.Shape();
+    booster.moveTo(0.8, 0.2);
+    booster.lineTo(0.8, -0.2);
+    booster.lineTo(-0.8, -0.2);
+    booster.lineTo(-0.8, 0.2);
+
+    const boosterGeometry = new THREE.ShapeGeometry(booster);
+    const boosterMaterial = new THREE.MeshBasicMaterial({color: 0x801ec4 });
+    boosterr = new THREE.Mesh(boosterGeometry, boosterMaterial);
+    boosterr.position.set(terrainPoints[20].x, terrainPoints[20].y + 0.2, 0);
+    scene.add(boosterr);
+
+    const ballPosition = ball.position;
+    const boosterPosition = boosterr.position;
+
+    const withinX = ballPosition.x >= boosterPosition.x - 0.8 && ballPosition.x <= boosterPosition.x + 0.8;
+    const withinY = ballPosition.y >= boosterPosition.y - 0.2 && ballPosition.y <= boosterPosition.y + 0.2;
+
+    if (withinX && withinY) {
+        velocity.x += 0.08;
+        console.log("Speed boost!");
+    }
+
+}
+
+function bumper() {
+    const bumperShape = new THREE.Shape();
+    bumperShape.moveTo(0.8, 0.2);
+    bumperShape.lineTo(0.8, -0.2);
+    bumperShape.lineTo(-0.8, -0.2);
+    bumperShape.lineTo(-0.8, 0.2);
+    bumperShape.closePath();
+
+    const bumperGeometry = new THREE.ShapeGeometry(bumperShape);
+    const bumperMaterial = new THREE.MeshBasicMaterial({ color: 0x4fa7ea });
+    const bumperMesh = new THREE.Mesh(bumperGeometry, bumperMaterial);
+    bumperMesh.position.set(terrainPoints[13].x, terrainPoints[13].y + 0.2, 0);
+    scene.add(bumperMesh);
+
+    const ballPosition = ball.position;
+    const bumperPosition = bumperMesh.position;
+
+    const withinX = ballPosition.x >= bumperPosition.x - 1 && ballPosition.x <= bumperPosition.x + 1;
+    const withinY = ballPosition.y >= bumperPosition.y - 1 && ballPosition.y <= bumperPosition.y + 0.8;
+
+    if (withinX && withinY) {
+        velocity.x *= -1.5;
+        velocity.y *= -1.5;
+        //console.log("Bounce!");
+    }
+
 }
