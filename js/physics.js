@@ -1,13 +1,13 @@
 let velocity = new THREE.Vector2();
-const gravity = -0.02;
-const friction = 0.98;
+const gravity = -0.02; //default -0.02
+const friction = 0.98; //default 0.98
 const groundedDamping = 0.8;
 const rollingFriction = 0.98;
 const velocityThreshold = 0.0005;
 const groundedThreshold = 0.01;
 const slopeFriction = 0.03; // Universal friction coefficient for slopes
 
-import { terrainPoints } from './terrain.js';
+import { terrainPoints, terrainWidth } from './terrain.js';
 import { terrain, ball, ballRadius, isDragging } from './main.js';
 
 export { applyPhysics, velocity };
@@ -108,20 +108,31 @@ function applyPhysics() {
             ball.position.y = terrainHeight;
             handleGroundedState(slopeAngle, inValley);
         } else {
-            velocity.y += gravity;
+            velocity.y += gravity; // Apply gravity when not grounded
         }
 
         // Update position
         ball.position.x += velocity.x;
         ball.position.y += velocity.y;
 
-        // Prevent sinking
+        // Prevent sinking into terrain
         const finalTerrainHeight = getTerrainHeightAt(ball.position.x) + ballRadius;
         if (ball.position.y < finalTerrainHeight) {
             ball.position.y = finalTerrainHeight;
             if (velocity.y < 0) {
                 velocity.y = 0;
             }
+        }
+
+        // **Boundary Collision Detection** - Check if ball is out of bounds
+        if (ball.position.x - ballRadius < -terrainWidth / 2) {
+            ball.position.x = -terrainWidth / 2 + ballRadius; // Prevent ball from going left off terrain
+            velocity.x = 0; // Stop horizontal movement
+        }
+
+        if (ball.position.x + ballRadius > terrainWidth / 2) {
+            ball.position.x = terrainWidth / 2 - ballRadius; // Prevent ball from going right off terrain
+            velocity.x = 0; // Stop horizontal movement
         }
     }
 }
