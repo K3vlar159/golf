@@ -97,3 +97,4 @@ function createTerrainMesh() {
 }
 
 export { createTerrainMesh, terrainPoints, terrainWidth };
+
