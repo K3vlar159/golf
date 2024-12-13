@@ -1,5 +1,5 @@
 let camera, scene, renderer, controls;
-let ground, ball, terrain, hole, boosterr, bumperr
+let ground, ball, terrain, hole, water, booster, bumper, portal, sandpit;
 const ballRadius = 0.25;
 let isDragging = false;
 let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag start
@@ -46,10 +46,13 @@ function render() {
     //camera.lookAt(ball.position);
     //camera.position.set(ball.position.x, ball.position.y, 10);
     applyPhysics();
-    birdie();
-    addWater(waterPoints);
-    booster();
-    bumper();
+
+    createHole(ball, hole);
+    checkWaterCollision(ball, water);
+    checkBoosterCollision(ball, booster, velocity);
+    checkBumperCollision(ball, bumper, velocity);
+    checkPortalCollision(ball, portal);
+    checkSandCollision(ball,sandpit,velocity);
 }
 
 function addObjects(){
@@ -57,7 +60,10 @@ function addObjects(){
     //ball
     const ballGeometry = new THREE.CircleGeometry(ballRadius, 32);
     const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    ball = new THREE.Mesh(ballGeometry, ballMaterial);
+    const wireframeGeometry = new THREE.EdgesGeometry(ballGeometry);
+
+    ball = new THREE.Mesh(ballGeometry, ballMaterial); // full ball
+    //ball = new THREE.LineSegments(wireframeGeometry, ballMaterial); // wireframe ball
     ball.position.set(0,5,0);
     scene.add(ball);
 
@@ -78,6 +84,14 @@ function addObjects(){
     hole = new THREE.Mesh(holeGeometry, holeMaterial);
     hole.position.set(terrainPoints[25].x, terrainPoints[25].y, 0);
     scene.add(hole);
+
+    createHole(ball, hole);
+    booster = createBooster(terrainPoints[20]);
+    water = createWater(terrainPoints);
+    bumper = createBumper(terrainPoints[13]);
+    portal = createPortal(terrainPoints[23], terrainPoints[10]);
+    sandpit = createSand(terrainPoints[17],3,1.5);
+
 }
 
 function onMouseDown(event) {
@@ -153,105 +167,180 @@ function onMouseUp(event) {
     }
 }
 
-function birdie() {
-    const ballPosition = ball.position;
-    const holePosition = hole.position;
+// POWER-UPS
 
-    const distance = ballPosition.distanceTo(holePosition);
+function createHole(ball, hole) {
+    const ballRadius = ball.geometry.parameters.radius;
+    const holeRadius = hole.geometry.parameters.radius;
+    const distance = ball.position.distanceTo(hole.position);
 
-    if (distance <= hole.geometry.parameters.radius + ball.geometry.parameters.radius) {
+    if (distance <= ballRadius + holeRadius) {
         scene.remove(ball);
-
         ball.geometry.dispose();
         ball.material.dispose();
-
         console.log("Birdie!");
     }
 }
 
-function addWater(waterPoints) {
+function createWater(terrainPoints) {
+    const waterPoints = [
+        new THREE.Vector2(terrainPoints[5].x, terrainPoints[5].y),
+        new THREE.Vector2(terrainPoints[10].x, terrainPoints[10].y),
+        new THREE.Vector2(terrainPoints[10].x - 2, terrainPoints[10].y - 3),
+        new THREE.Vector2(terrainPoints[5].x + 2, terrainPoints[5].y - 3),
+    ];
+
     const shape = new THREE.Shape();
-
-    waterPoints[0] = new THREE.Vector2(terrainPoints[5].x, terrainPoints[5].y)
-    waterPoints[1] = new THREE.Vector2(terrainPoints[10].x, terrainPoints[10].y);
-    waterPoints[2] = new THREE.Vector2(terrainPoints[10].x - 2, terrainPoints[10].y - 3);
-    waterPoints[3] = new THREE.Vector2(terrainPoints[5].x + 2, terrainPoints[5].y - 3);
-
     shape.moveTo(waterPoints[0].x, waterPoints[0].y);
     waterPoints.forEach(point => shape.lineTo(point.x, point.y));
     shape.closePath();
 
     const geometry = new THREE.ShapeGeometry(shape);
-    const material = new THREE.MeshBasicMaterial({ color: 0x0000ff, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+    const material = new THREE.MeshBasicMaterial({
+        color: 0x0000ff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.6
+    });
 
     const waterMesh = new THREE.Mesh(geometry, material);
     scene.add(waterMesh);
 
-    const ballPosition = ball.position;
-    const waterPosition = waterMesh.position;
+    return waterMesh;
+}
 
-    const distance = ballPosition.distanceTo(waterPosition);
+function checkWaterCollision(ball, waterMesh) {
+    const ballPos = ball.position;
+    const waterPos = waterMesh.position;
 
-    if (distance <= waterMesh.geometry.parameters.radius + ball.geometry.parameters.radius) {
+    const withinX = ballPos.x >= waterPos.x - 2 && ballPos.x <= waterPos.x + 2;
+    const withinY = ballPos.y >= waterPos.y - 3 && ballPos.y <= waterPos.y;
+
+    if (withinX && withinY) {
         scene.remove(ball);
-
         ball.geometry.dispose();
         ball.material.dispose();
-
         console.log("SPLASH!");
     }
 }
 
-function booster() {
-    const booster = new THREE.Shape();
-    booster.moveTo(0.8, 0.2);
-    booster.lineTo(0.8, -0.2);
-    booster.lineTo(-0.8, -0.2);
-    booster.lineTo(-0.8, 0.2);
+function createBooster(position) {
+    const boosterShape = new THREE.Shape();
+    boosterShape.moveTo(0.8, 0.2);
+    boosterShape.lineTo(0.8, -0.2);
+    boosterShape.lineTo(-0.8, -0.2);
+    boosterShape.lineTo(-0.8, 0.2);
 
-    const boosterGeometry = new THREE.ShapeGeometry(booster);
-    const boosterMaterial = new THREE.MeshBasicMaterial({color: 0x801ec4 });
-    boosterr = new THREE.Mesh(boosterGeometry, boosterMaterial);
-    boosterr.position.set(terrainPoints[20].x, terrainPoints[20].y + 0.2, 0);
-    scene.add(boosterr);
+    const geometry = new THREE.ShapeGeometry(boosterShape);
+    const material = new THREE.MeshBasicMaterial({ color: 0x801ec4 });
+    const booster = new THREE.Mesh(geometry, material);
+    booster.position.set(position.x, position.y, 0);
+    scene.add(booster);
 
-    const ballPosition = ball.position;
-    const boosterPosition = boosterr.position;
+    return booster;
+}
 
-    const withinX = ballPosition.x >= boosterPosition.x - 0.8 && ballPosition.x <= boosterPosition.x + 0.8;
-    const withinY = ballPosition.y >= boosterPosition.y - 0.2 && ballPosition.y <= boosterPosition.y + 0.2;
+function checkBoosterCollision(ball, booster, velocity) {
+    const ballPos = ball.position;
+    const boosterPos = booster.position;
+
+    const withinX = ballPos.x >= boosterPos.x - 0.8 && ballPos.x <= boosterPos.x + 0.8;
+    const withinY = ballPos.y >= boosterPos.y - 0.2 && ballPos.y <= boosterPos.y + 0.2;
 
     if (withinX && withinY) {
         velocity.x += 0.08;
         console.log("Speed boost!");
     }
-
 }
 
-function bumper() {
-    const bumperShape = new THREE.Shape();
-    bumperShape.moveTo(0.8, 0.2);
-    bumperShape.lineTo(0.8, -0.2);
-    bumperShape.lineTo(-0.8, -0.2);
-    bumperShape.lineTo(-0.8, 0.2);
-    bumperShape.closePath();
+function createBumper(position) {
+    const shape = new THREE.Shape();
+    shape.moveTo(0.8, 0.2);
+    shape.lineTo(0.8, -0.2);
+    shape.lineTo(-0.8, -0.2);
+    shape.lineTo(-0.8, 0.2);
+    shape.closePath();
 
-    const bumperGeometry = new THREE.ShapeGeometry(bumperShape);
-    const bumperMaterial = new THREE.MeshBasicMaterial({ color: 0x4fa7ea });
-    const bumperMesh = new THREE.Mesh(bumperGeometry, bumperMaterial);
-    bumperMesh.position.set(terrainPoints[13].x, terrainPoints[13].y + 0.2, 0);
-    scene.add(bumperMesh);
+    const geometry = new THREE.ShapeGeometry(shape);
+    const material = new THREE.MeshBasicMaterial({ color: 0x4fa7ea });
+    const bumper = new THREE.Mesh(geometry, material);
+    bumper.position.set(position.x, position.y, 0);
+    scene.add(bumper);
 
-    const ballPosition = ball.position;
-    const bumperPosition = bumperMesh.position;
+    return bumper;
+}
 
-    const withinX = ballPosition.x >= bumperPosition.x - 1 && ballPosition.x <= bumperPosition.x + 1;
-    const withinY = ballPosition.y >= bumperPosition.y - 1 && ballPosition.y <= bumperPosition.y + 0.8;
+function checkBumperCollision(ball, bumper, velocity) {
+    const ballPos = ball.position;
+    const bumperPos = bumper.position;
+
+    const withinX = ballPos.x >= bumperPos.x - 1 && ballPos.x <= bumperPos.x + 1;
+    const withinY = ballPos.y >= bumperPos.y - 1 && ballPos.y <= bumperPos.y + 0.8;
 
     if (withinX && withinY) {
         velocity.x *= -1.5;
         velocity.y *= -1.5;
-        //console.log("Bounce!");
+        console.log("Bounce!");
     }
-
 }
+
+function createPortal(entryPosition, exitPosition) {
+    const createCircle = (color) => {
+        const geometry = new THREE.CircleGeometry(0.5, 32);
+        const material = new THREE.MeshBasicMaterial({ color });
+        return new THREE.Mesh(geometry, material);
+    };
+
+    const entry = createCircle(0xf77036);
+    entry.position.set(entryPosition.x, entryPosition.y, 0);
+    scene.add(entry);
+
+    const exit = createCircle(0x01b48c);
+    exit.position.set(exitPosition.x, exitPosition.y, 0);
+    scene.add(exit);
+
+    return { entry, exit };
+}
+
+function checkPortalCollision(ball, portal) {
+    const distance = ball.position.distanceTo(portal.entry.position);
+
+    if (distance <= ball.geometry.parameters.radius + portal.entry.geometry.parameters.radius) {
+        ball.position.set(portal.exit.position.x, portal.exit.position.y, 0);
+        console.log("Port!");
+    }
+}
+
+function createSand(position, width, height) {
+    const geometry = new THREE.PlaneGeometry(width, height);
+    const material = new THREE.MeshBasicMaterial({
+        color: 0xdeb887, // Sand color
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.8,
+    });
+
+    const sand = new THREE.Mesh(geometry, material);
+    sand.position.set(position.x, position.y, 0);
+    scene.add(sand);
+
+    return sand;
+}
+
+function checkSandCollision(ball, sand, velocity) {
+    const ballPos = ball.position;
+    const sandPos = sand.position;
+
+    const halfWidth = sand.geometry.parameters.width / 2;
+    const halfHeight = sand.geometry.parameters.height / 2;
+
+    const withinX = ballPos.x >= sandPos.x - halfWidth && ballPos.x <= sandPos.x + halfWidth;
+    const withinY = ballPos.y >= sandPos.y - halfHeight && ballPos.y <= sandPos.y + halfHeight;
+
+    if (withinX && withinY) {
+        velocity.x *= 0.7;
+        velocity.y *= 0.5;
+        //console.log("Slowed down in the sand!");
+    }
+}
+
