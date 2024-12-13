@@ -7,6 +7,11 @@ const launchStrength = 0.5; // Increased for more powerful launches
 const maxPullLength = 2.5;
 const cameraSpeed = 0.05;
 
+// Zoom parameters
+const minZoom = 5;  // Closest zoom level
+const maxZoom = 17; // Furthest zoom level
+let currentZoom = 10; // Initial zoom level
+
 import { createTerrainMesh, terrainPoints } from './terrain.js';
 import { applyPhysics, velocity} from './physics.js';
 
@@ -29,9 +34,56 @@ function init() {
     addObjects();
     console.log("Terrain Points:", terrainPoints);
 
+    // Add event listeners
     renderer.domElement.addEventListener('mousedown', onMouseDown);
     renderer.domElement.addEventListener('mousemove', onMouseMove);
     renderer.domElement.addEventListener('mouseup', onMouseUp);
+
+    // Add scroll wheel zoom
+    renderer.domElement.addEventListener('wheel', onMouseWheel);
+
+    // Handle window resize
+    window.addEventListener('resize', onWindowResize);
+}
+
+function onWindowResize() {
+    const aspect = window.innerWidth / window.innerHeight;
+
+    // Adjust camera frustum based on current zoom
+    const zoomFactor = currentZoom / 10;
+    camera.left = -10 * aspect * zoomFactor;
+    camera.right = 10 * aspect * zoomFactor;
+    camera.top = 10 * zoomFactor;
+    camera.bottom = -10 * zoomFactor;
+
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onMouseWheel(event) {
+    // Prevent default scroll behavior
+    event.preventDefault();
+
+    // Adjust zoom based on scroll direction
+    // Smaller delta for smoother zooming
+    const zoomSpeed = 0.8;
+    currentZoom += event.deltaY > 0 ? zoomSpeed : -zoomSpeed;
+
+    // Clamp zoom between min and max values
+    currentZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom));
+
+    // Get the current aspect ratio
+    const aspect = window.innerWidth / window.innerHeight;
+
+    // Update camera frustum
+    const zoomFactor = currentZoom / 10;
+    camera.left = -10 * aspect * zoomFactor;
+    camera.right = 10 * aspect * zoomFactor;
+    camera.top = 10 * zoomFactor;
+    camera.bottom = -10 * zoomFactor;
+
+    // Update the projection matrix
+    camera.updateProjectionMatrix();
 }
 
 function render() {
