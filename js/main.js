@@ -8,6 +8,7 @@ const launchStrength = 0.5; // Increased for more powerful launches
 const maxPullLength = 2.5;
 const cameraSpeed = 0.05;
 
+
 // Zoom parameters
 const minZoom = 5;  // Closest zoom level
 const maxZoom = 17; // Furthest zoom level
@@ -15,6 +16,7 @@ let currentZoom = 10; // Initial zoom level
 
 import { createTerrainMesh, terrainPoints } from './terrain.js';
 import { applyPhysics, velocity} from './physics.js';
+import { generateWater} from './water.js';
 
 export { terrain, ball, ballRadius, isDragging };
 
@@ -34,7 +36,7 @@ function init() {
 
     scene = new THREE.Scene();
     addObjects();
-    console.log("Terrain Points:", terrainPoints);
+    //console.log("Terrain Points:", terrainPoints);
 
     // Add event listeners
     renderer.domElement.addEventListener('mousedown', onMouseDown);
@@ -108,12 +110,15 @@ function render() {
     renderer.render(scene, camera);
     applyPhysics();
 
-    createHole(ball, hole);
-    checkWaterCollision(ball, water);
-    checkBoosterCollision(ball, booster, velocity);
-    checkBumperCollision(ball, bumper, velocity);
-    checkPortalCollision(ball, portal);
-    checkSandCollision(ball,sandpit,velocity);
+    holeCollision(ball, hole);
+    checkCollisionsWithWater(ball, water);
+
+
+
+    //checkBoosterCollision(ball, booster, velocity);
+    //checkBumperCollision(ball, bumper, velocity);
+    //checkPortalCollision(ball, portal);
+    //checkSandCollision(ball,sandpit,velocity);
 }
 
 function addObjects(){
@@ -151,12 +156,15 @@ function addObjects(){
     hole.position.set(terrainPoints[25].x, terrainPoints[25].y, 0);
     scene.add(hole);
 
-    createHole(ball, hole);
-    booster = createBooster(terrainPoints[20]);
-    water = createWater(terrainPoints);
-    bumper = createBumper(terrainPoints[13]);
-    portal = createPortal(terrainPoints[23], terrainPoints[10]);
-    sandpit = createSand(terrainPoints[17],3,1.5);
+    //water
+    water = createWaterShapes(terrainPoints, 10);
+
+
+    //createHole(ball, hole);
+    //booster = createBooster(terrainPoints[20]);
+    //bumper = createBumper(terrainPoints[13]);
+   // portal = createPortal(terrainPoints[23], terrainPoints[10]);
+   // sandpit = createSand(terrainPoints[17],3,1.5);
 
 }
 
@@ -259,7 +267,7 @@ function onMouseUp(event) {
 
 // POWER-UPS
 
-function createHole(ball, hole) {
+function holeCollision(ball, hole) {
     const ballRadius = ball.geometry.parameters.radius;
     const holeRadius = hole.geometry.parameters.radius;
     const distance = ball.position.distanceTo(hole.position);
@@ -272,32 +280,6 @@ function createHole(ball, hole) {
     }
 }
 
-function createWater(terrainPoints) {
-    const waterPoints = [
-        new THREE.Vector2(terrainPoints[5].x, terrainPoints[5].y),
-        new THREE.Vector2(terrainPoints[10].x, terrainPoints[10].y),
-        new THREE.Vector2(terrainPoints[10].x - 2, terrainPoints[10].y - 3),
-        new THREE.Vector2(terrainPoints[5].x + 2, terrainPoints[5].y - 3),
-    ];
-
-    const shape = new THREE.Shape();
-    shape.moveTo(waterPoints[0].x, waterPoints[0].y);
-    waterPoints.forEach(point => shape.lineTo(point.x, point.y));
-    shape.closePath();
-
-    const geometry = new THREE.ShapeGeometry(shape);
-    const material = new THREE.MeshBasicMaterial({
-        color: 0x0000ff,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.6
-    });
-
-    const waterMesh = new THREE.Mesh(geometry, material);
-    scene.add(waterMesh);
-
-    return waterMesh;
-}
 
 function checkWaterCollision(ball, waterMesh) {
     const ballPos = ball.position;
@@ -313,6 +295,17 @@ function checkWaterCollision(ball, waterMesh) {
         console.log("SPLASH!");
     }
 }
+
+// Function to check collisions with all water shapes
+function checkCollisionsWithWater(ball, waterShapes) {
+    for (const waterMesh of waterShapes) {
+        checkWaterCollision(ball, waterMesh);
+    }
+
+    console.log("No collision with any water shape.");
+    return false;  // Return false if no collisions are detected
+}
+
 
 function createBooster(position) {
     const boosterShape = new THREE.Shape();
@@ -434,3 +427,16 @@ function checkSandCollision(ball, sand, velocity) {
     }
 }
 
+function createWaterShapes(terrainPoints, count = 10) {
+    const waterShapes = [];
+
+    for (let i = 0; i < count; i++) {
+        const waterShape = generateWater(terrainPoints);
+        if (waterShape) {
+            waterShapes.push(waterShape);  // Store the generated water shape in the array
+            scene.add(waterShape);         // Add the water shape to the scene
+        }
+    }
+
+    return waterShapes;  // Return the array of water shapes
+}
