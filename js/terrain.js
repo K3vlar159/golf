@@ -1,9 +1,9 @@
 // Terrain settings
-const terrainWidth = 300;
+const terrainWidth = 50;
 const maxTerrainHeight = 20;
 const minTerrainHeight = -15;
-const detailLevel = 7 // Number of iterations (use smaller numbers for less detail)
-const roughness = 0.2; // Controls how jagged the terrain is/hill height (0.1 to 1.0)
+const detailLevel = 5 // Number of iterations (use smaller numbers for less detail)
+const roughness = 0.1; // Controls how jagged the terrain is/hill height (0.1 to 1.0)
 let terrainPoints;
 
 function generateTerrain(width, maxH, minH, detail, roughness) {

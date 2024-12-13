@@ -1,8 +1,6 @@
-var camera, scene, renderer, controls;
-var ground, ball, terrain, guideLine;
-const ballRadius = 0.25; //0.25 default
+
 let camera, scene, renderer, controls;
-let ground, ball, terrain, hole, water, booster, bumper, portal, sandpit;
+let ground, ball, terrain, guideLine, hole, water, booster, bumper, portal, sandpit;
 const ballRadius = 0.25;
 let isDragging = false;
 let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag start
