@@ -14,8 +14,8 @@ function generateWater(terrainPoints) {
     const maxAttempts = 10;  // Maximum number of attempts to find a suitable valley
 
     while (attempts < maxAttempts) {
-        // Ensure the random index is not within the first 10 points
-        const startIndex = Math.floor(Math.random() * (terrainPoints.length - 10)) + 10;
+        // Ensure the random index is not within the first 10 or last 10 points
+        const startIndex = Math.floor(Math.random() * (terrainPoints.length - 20)) + 10;
         const startPoint = terrainPoints[startIndex];
 
         for (let i = startIndex + 1; i < terrainPoints.length; i++) {

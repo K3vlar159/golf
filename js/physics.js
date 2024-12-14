@@ -5,7 +5,7 @@ const groundedDamping = 0.8;
 const rollingFriction = 0.98;
 const velocityThreshold = 0.0005;
 const groundedThreshold = 0.01;
-const slopeFriction = 0.03; // Universal friction coefficient for slopes
+const slopeFriction = 0.05; // Universal friction coefficient for slopes
 
 import { terrainPoints, terrainWidth } from './terrain.js';
 import { terrain, ball, ballRadius} from './main.js';

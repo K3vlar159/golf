@@ -4,6 +4,7 @@ const ballRadius = 0.25;
 const numberOfWaters = 10;
 const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
+const WATER_RESET = true;
 
 import { createTerrainMesh, terrainPoints, terrainWidth } from './terrain.js';
 import { applyPhysics, velocity} from './physics.js';
@@ -55,13 +56,13 @@ function render() {
 function addObjects(){
     // Ball
     const ballGeometry = new THREE.CircleGeometry(ballRadius, 32);
-    const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const ballMaterial = new THREE.MeshBasicMaterial({ color: 'rgb(255,255,255)' });
     ball = new THREE.Mesh(ballGeometry, ballMaterial); // full ball
     ball.position.set(startCoords.x, startCoords.y,startCoords.z);
     scene.add(ball);
 
     // Line to represent the pull direction
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red color for the line
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 'rgb(255,0,0)' }); // Red color for the line
     const lineGeometry = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0, 0, 0),
         new THREE.Vector3(0, 0, 0)
@@ -76,10 +77,10 @@ function addObjects(){
     scene.add(terrain);
 
     // Golf hole
-    const holeGeometry = new THREE.CircleGeometry(0.25, 32);
-    const holeMaterial = new THREE.MeshBasicMaterial({color: 0x666699 });
+    const holeGeometry = new THREE.CircleGeometry(ballRadius*2, 32);
+    const holeMaterial = new THREE.MeshBasicMaterial({color: 'rgb(0,0,0)' });
     hole = new THREE.Mesh(holeGeometry, holeMaterial);
-    hole.position.set(terrainPoints[25].x, terrainPoints[25].y, 0);
+    hole.position.set(terrainPoints[terrainPoints.length-10].x, terrainPoints[terrainPoints.length-10].y, 0);
     scene.add(hole);
 
     // Generate water on the terrain
@@ -95,20 +96,20 @@ function addObjects(){
 }
 
 function holeCollision() {
-    const ballRadius = ball.geometry.parameters.radius;
     const holeRadius = hole.geometry.parameters.radius;
     const distance = ball.position.distanceTo(hole.position);
 
-    if (distance <= ballRadius + holeRadius) {
-        scene.remove(ball);
-        ball.geometry.dispose();
-        ball.material.dispose();
+    // Check if the center of the ball is within the hole's radius
+    if (distance <= holeRadius) {
+        // Move the ball inside the hole (you can adjust Y position if needed)
+        ball.position.set(hole.position.x, hole.position.y-holeRadius/2, 0.001);
+
+        //scene.remove(ball);
+        //ball.geometry.dispose();
+        //ball.material.dispose();
+
         console.log("Birdie!");
     }
-}
-
-function checkWaterCollision(ball, waterMesh) {
-
 }
 
 // Function to check collisions with all water shapes
@@ -121,9 +122,11 @@ function checkCollisionsWithWater() {
         const ballPosition = ball.position;
         // Check if the ball's y-position is below the water's y-position
         if (waterBoundingBox.containsPoint(ballPosition)) {
-            velocity.x = 0;
-            velocity.y = 0;
-            ball.position.set(startCoords.x, startCoords.y, startCoords.z);
+            if(WATER_RESET){
+                ball.position.set(startCoords.x, startCoords.y, startCoords.z);
+                velocity.x = 0;
+                velocity.y = 0;
+            }
             console.log("SPLASH!");
         }
     }
