@@ -6,10 +6,12 @@ const rollingFriction = 0.98;
 const velocityThreshold = 0.0005;
 const groundedThreshold = 0.01;
 const slopeFriction = 0.05; // Universal friction coefficient for slopes
+const sandSlowness = 0.8;
 
 import { terrainPoints, terrainWidth } from './terrain.js';
 import { terrain, ball, ballRadius} from './main.js';
 import { isDragging} from './controls.js';
+import { sandPoints} from './sand.js';
 
 export { applyPhysics, velocity };
 
@@ -96,6 +98,41 @@ function handleGroundedState(slopeAngle, inValley) {
     }
 }
 
+function checkSandCollision() {
+    // Iterate through each sand shape in the sandPoints array
+    for (let i = 0; i < sandPoints.length; i++) {
+        const sandShape = sandPoints[i];
+
+        // Iterate through the vertices of the sand shape to find the range of x values
+        let minX = Infinity;
+        let maxX = -Infinity;
+
+        // Find the min and max x values from the vertices
+        for (let j = 0; j < sandShape.length; j++) {
+            const vertex = sandShape[j];
+            minX = Math.min(minX, vertex.x);
+            maxX = Math.max(maxX, vertex.x);
+        }
+
+
+        // Check if the ball's x position is within the range of the sand shape's vertices
+        if (ball.position.x >= minX && ball.position.x <= maxX) {
+
+            // Get terrain height at the ball's x position
+            const terrainHeight = getTerrainHeightAt(ball.position.x);
+
+            // Check if the ball's y position is near the terrain height
+            if (Math.abs(ball.position.y - terrainHeight) < ballRadius*2) {
+                //console.log("on sand");
+                // Apply sand friction if the ball is on the sand shape
+                velocity.x *= sandSlowness;
+                velocity.y *= sandSlowness;
+                break; // Exit after the first match (if you only need to check one sand shape)
+            }
+        }
+    }
+}
+
 function applyPhysics() {
     if (!isDragging) {
         const terrainHeight = getTerrainHeightAt(ball.position.x) + ballRadius;
@@ -111,6 +148,9 @@ function applyPhysics() {
         } else {
             velocity.y += gravity; // Apply gravity when not grounded
         }
+
+        // Check for sand collision and apply friction
+        checkSandCollision();
 
         // Update position
         ball.position.x += velocity.x;
@@ -137,3 +177,4 @@ function applyPhysics() {
         }
     }
 }
+

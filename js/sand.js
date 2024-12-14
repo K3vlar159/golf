@@ -32,6 +32,11 @@ function createSandShape(startPoint, endPoint, midPoints) {
         return null;
     }
 
+    let points = [];
+    points.push(startPoint, ...midPoints, endPoint);
+
+    sandPoints.push(points);
+
     const sandShape = new THREE.Shape();
 
     // Create the initial line from start to end
@@ -59,7 +64,7 @@ function createSandShape(startPoint, endPoint, midPoints) {
     // Close the shape by linking the end back to the start
     sandShape.lineTo(startPoint.x, startPoint.y);  // Close the shape
 
-    sandPoints.push(sandShape);
+
 
     // Create geometry from the shape
     const geometry = new THREE.ShapeGeometry(sandShape);
