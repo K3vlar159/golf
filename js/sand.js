@@ -11,7 +11,7 @@ function generateSand(terrainPoints) {
         return null;
     }
 
-        const startIndex = Math.floor(Math.random() * (terrainPoints.length - SAND_MAX)) ;
+        const startIndex = Math.floor(Math.random() * (terrainPoints.length - 10 - SAND_MAX)) ;
         const startPoint = terrainPoints[startIndex];
         const endIndex = Math.floor(Math.random() * (SAND_MAX-SAND_MIN)) + SAND_MIN + startIndex;
         const endPoint = terrainPoints[endIndex];
