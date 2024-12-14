@@ -1,9 +1,7 @@
-
-let camera, scene, renderer, controls;
-let ground, ball, terrain, guideLine, hole, water, booster, bumper, portal, sandpit;
+let camera, scene, renderer, ball, terrain, guideLine, hole, water;
+let ground, booster, bumper, portal, sandpit;
 const ballRadius = 0.25;
-let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag start
-
+const numberOfWaters = 10;
 const cameraSpeed = 0.05;
 const startCoords = { x: 0, y: 20, z: 0 };
 
@@ -12,7 +10,7 @@ import { applyPhysics, velocity} from './physics.js';
 import { generateWater} from './water.js';
 import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp} from './controls.js';
 
-export { terrain, ball, ballRadius, camera, pullOrigin, guideLine};
+export { terrain, ball, ballRadius, camera, guideLine};
 
 init();
 render();
@@ -40,28 +38,13 @@ function init() {
 
 function render() {
     requestAnimationFrame(render);
-
-    // Smoothly interpolate the camera position to follow the ball
-    const targetX = ball.position.x;
-    const targetY = ball.position.y;
-
-    // Update the camera position smoothly, but lock the Z-axis and prevent rotation
-    camera.position.x += (targetX - camera.position.x) * cameraSpeed;
-    camera.position.y += (targetY - camera.position.y) * cameraSpeed;
-
-    // Lock the Z position of the camera
-    camera.position.z = 10; // Keep a fixed distance above the scene
-
-    // Keep the camera looking straight down on the XY plane
-    camera.lookAt(camera.position.x, camera.position.y, 0);
-
     renderer.render(scene, camera);
+
+    followBall();
     applyPhysics();
 
     holeCollision(ball, hole);
     checkCollisionsWithWater(ball, water);
-
-
 
     //checkBoosterCollision(ball, booster, velocity);
     //checkBumperCollision(ball, bumper, velocity);
@@ -73,10 +56,7 @@ function addObjects(){
     //ball
     const ballGeometry = new THREE.CircleGeometry(ballRadius, 32);
     const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const wireframeGeometry = new THREE.EdgesGeometry(ballGeometry);
-
     ball = new THREE.Mesh(ballGeometry, ballMaterial); // full ball
-    //ball = new THREE.LineSegments(wireframeGeometry, ballMaterial); // wireframe ball
     ball.position.set(0,5,0);
     scene.add(ball);
 
@@ -87,10 +67,8 @@ function addObjects(){
         new THREE.Vector3(0, 0, 0)
     ]);
     guideLine = new THREE.Line(lineGeometry, lineMaterial);
-
     // Make the guideline a child of the ball so it moves with the ball
     ball.add(guideLine);
-
     guideLine.visible = false; // Initially hidden
 
     //procedurally generated terrain
@@ -105,7 +83,7 @@ function addObjects(){
     scene.add(hole);
 
     //water
-    water = createWaterShapes(terrainPoints, 10);
+    water = createWaterShapes(terrainPoints, numberOfWaters);
 
 
     //createHole(ball, hole);
@@ -288,4 +266,20 @@ function createWaterShapes(terrainPoints, count = 10) {
     }
 
     return waterShapes;  // Return the array of water shapes
+}
+
+function followBall() {
+    // Smoothly interpolate the camera position to follow the ball
+    const targetX = ball.position.x;
+    const targetY = ball.position.y;
+
+    // Update the camera position smoothly, but lock the Z-axis and prevent rotation
+    camera.position.x += (targetX - camera.position.x) * cameraSpeed;
+    camera.position.y += (targetY - camera.position.y) * cameraSpeed;
+
+    // Lock the Z position of the camera
+    camera.position.z = 10; // Keep a fixed distance above the scene
+
+    // Keep the camera looking straight down on the XY plane
+    camera.lookAt(camera.position.x, camera.position.y, 0);
 }

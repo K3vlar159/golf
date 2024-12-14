@@ -3,13 +3,14 @@ const minZoom = 5;  // Closest zoom level
 const maxZoom = 17; // Furthest zoom level
 let currentZoom = 10; // Initial zoom level
 
+let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag start
 const maxPullLength = 1.4;
 const launchStrength = 0.5; // Increased for more powerful launches
 
 let isDragging = false;
 
 export {onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp, isDragging};
-import { camera, pullOrigin, guideLine, ball} from './main.js';
+import { camera, guideLine, ball} from './main.js';
 import {velocity} from './physics.js';
 
 function onWindowResize() {
