@@ -8,7 +8,8 @@ const groundedThreshold = 0.01;
 const slopeFriction = 0.03; // Universal friction coefficient for slopes
 
 import { terrainPoints, terrainWidth } from './terrain.js';
-import { terrain, ball, ballRadius, isDragging } from './main.js';
+import { terrain, ball, ballRadius} from './main.js';
+import { isDragging} from './controls.js';
 
 export { applyPhysics, velocity };
 
