@@ -1,17 +1,21 @@
-// Zoom parameters
+// ZOOM PARAMETERS
 const minZoom = 5;  // Closest zoom level
 const maxZoom = 17; // Furthest zoom level
 let currentZoom = 10; // Initial zoom level
 
+// MOUSE PULL
 let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag start
 const maxPullLength = 1.4;
 const launchStrength = 0.5; // Increased for more powerful launches
-
 let isDragging = false;
 
 export {onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp, isDragging};
 import { camera, guideLine, ball} from './main.js';
 import {velocity} from './physics.js';
+
+
+
+
 
 function onWindowResize() {
     const aspect = window.innerWidth / window.innerHeight;

@@ -3,9 +3,9 @@ let ground, booster, bumper, portal, sandpit;
 const ballRadius = 0.25;
 const numberOfWaters = 10;
 const cameraSpeed = 0.05;
-const startCoords = { x: 0, y: 20, z: 0 };
+const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
 
-import { createTerrainMesh, terrainPoints } from './terrain.js';
+import { createTerrainMesh, terrainPoints, terrainWidth } from './terrain.js';
 import { applyPhysics, velocity} from './physics.js';
 import { generateWater} from './water.js';
 import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp} from './controls.js';
@@ -43,8 +43,8 @@ function render() {
     followBall();
     applyPhysics();
 
-    holeCollision(ball, hole);
-    checkCollisionsWithWater(ball, water);
+    holeCollision();
+    checkCollisionsWithWater();
 
     //checkBoosterCollision(ball, booster, velocity);
     //checkBumperCollision(ball, bumper, velocity);
@@ -53,14 +53,14 @@ function render() {
 }
 
 function addObjects(){
-    //ball
+    // Ball
     const ballGeometry = new THREE.CircleGeometry(ballRadius, 32);
     const ballMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
     ball = new THREE.Mesh(ballGeometry, ballMaterial); // full ball
-    ball.position.set(0,5,0);
+    ball.position.set(startCoords.x, startCoords.y,startCoords.z);
     scene.add(ball);
 
-    //line to represent the pull direction
+    // Line to represent the pull direction
     const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 }); // Red color for the line
     const lineGeometry = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(0, 0, 0),
@@ -71,18 +71,18 @@ function addObjects(){
     ball.add(guideLine);
     guideLine.visible = false; // Initially hidden
 
-    //procedurally generated terrain
+    // Procedurally generated terrain
     terrain = createTerrainMesh(window.innerHeight);
     scene.add(terrain);
 
-    // golf hole
+    // Golf hole
     const holeGeometry = new THREE.CircleGeometry(0.25, 32);
     const holeMaterial = new THREE.MeshBasicMaterial({color: 0x666699 });
     hole = new THREE.Mesh(holeGeometry, holeMaterial);
     hole.position.set(terrainPoints[25].x, terrainPoints[25].y, 0);
     scene.add(hole);
 
-    //water
+    // Generate water on the terrain
     water = createWaterShapes(terrainPoints, numberOfWaters);
 
 
@@ -94,9 +94,7 @@ function addObjects(){
 
 }
 
-// POWER-UPS
-
-function holeCollision(ball, hole) {
+function holeCollision() {
     const ballRadius = ball.geometry.parameters.radius;
     const holeRadius = hole.geometry.parameters.radius;
     const distance = ball.position.distanceTo(hole.position);
@@ -109,28 +107,26 @@ function holeCollision(ball, hole) {
     }
 }
 
-
 function checkWaterCollision(ball, waterMesh) {
-    // Calculate the bounding box of the water
-    const waterBoundingBox = new THREE.Box3().setFromObject(waterMesh);
 
-    // Get the ball's position
-    const ballPosition = ball.position;
-    // Check if the ball's y-position is below the water's y-position
-    if (waterBoundingBox.containsPoint(ballPosition)) {
-        velocity.x = 0;
-        velocity.y = 0;
-        ball.position.set(startCoords.x, startCoords.y, startCoords.z);
-        console.log("SPLASH!");
-    }
 }
 
 // Function to check collisions with all water shapes
-function checkCollisionsWithWater(ball, waterShapes) {
-    for (const waterMesh of waterShapes) {
-        checkWaterCollision(ball, waterMesh);
+function checkCollisionsWithWater() {
+    for (const waterMesh of water) {
+        // Calculate the bounding box of the water
+        const waterBoundingBox = new THREE.Box3().setFromObject(waterMesh);
+
+        // Get the ball's position
+        const ballPosition = ball.position;
+        // Check if the ball's y-position is below the water's y-position
+        if (waterBoundingBox.containsPoint(ballPosition)) {
+            velocity.x = 0;
+            velocity.y = 0;
+            ball.position.set(startCoords.x, startCoords.y, startCoords.z);
+            console.log("SPLASH!");
+        }
     }
-    return false;  // Return false if no collisions are detected
 }
 
 
