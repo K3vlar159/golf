@@ -1,7 +1,8 @@
-let camera, scene, renderer, ball, terrain, guideLine, hole, water;
+let camera, scene, renderer, ball, terrain, guideLine, hole, water, sand;
 let ground, booster, bumper, portal, sandpit;
 const ballRadius = 0.25;
-const numberOfWaters = 10;
+const numberOfWaters = 5;
+const numberOfSands = 5;
 const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
 const WATER_RESET = true;
@@ -9,6 +10,7 @@ const WATER_RESET = true;
 import { createTerrainMesh, terrainPoints, terrainWidth } from './terrain.js';
 import { applyPhysics, velocity} from './physics.js';
 import { generateWater} from './water.js';
+import { generateSand,sandPoints} from './sand.js';
 import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp} from './controls.js';
 
 export { terrain, ball, ballRadius, camera, guideLine};
@@ -86,12 +88,12 @@ function addObjects(){
     // Generate water on the terrain
     water = createWaterShapes(terrainPoints, numberOfWaters);
 
+    // Generate sand on the terrain
+    sand = createSandShapes(terrainPoints, numberOfSands);
 
-    //createHole(ball, hole);
     //booster = createBooster(terrainPoints[20]);
     //bumper = createBumper(terrainPoints[13]);
    // portal = createPortal(terrainPoints[23], terrainPoints[10]);
-   // sandpit = createSand(terrainPoints[17],3,1.5);
 
 }
 
@@ -220,21 +222,6 @@ function checkPortalCollision(ball, portal) {
     }
 }
 
-function createSand(position, width, height) {
-    const geometry = new THREE.PlaneGeometry(width, height);
-    const material = new THREE.MeshBasicMaterial({
-        color: 0xdeb887, // Sand color
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.8,
-    });
-
-    const sand = new THREE.Mesh(geometry, material);
-    sand.position.set(position.x, position.y, 0);
-    scene.add(sand);
-
-    return sand;
-}
 
 function checkSandCollision(ball, sand, velocity) {
     const ballPos = ball.position;
@@ -253,7 +240,7 @@ function checkSandCollision(ball, sand, velocity) {
     }
 }
 
-function createWaterShapes(terrainPoints, count = 10) {
+function createWaterShapes(terrainPoints, count) {
     const waterShapes = [];
 
     for (let i = 0; i < count; i++) {
@@ -265,6 +252,22 @@ function createWaterShapes(terrainPoints, count = 10) {
     }
 
     return waterShapes;  // Return the array of water shapes
+}
+
+function createSandShapes(terrainPoints, count) {
+    const sandShapes = [];
+
+    for (let i = 0; i < count; i++) {
+        const sandShape = generateSand(terrainPoints);
+        if (sandShape) {
+            sandShapes.push(sandShape);  // Store the generated water shape in the array
+            scene.add(sandShape);         // Add the water shape to the scene
+        }
+    }
+
+    console.log("SAND POINTS:", sandPoints);
+
+    return sandShapes;  // Return the array of water shapes
 }
 
 function followBall() {
