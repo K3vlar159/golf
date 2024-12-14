@@ -7,7 +7,7 @@ let pullOrigin = new THREE.Vector3(); // Dynamic pull origin set during drag sta
 const launchStrength = 0.5; // Increased for more powerful launches
 const maxPullLength = 2.5;
 const cameraSpeed = 0.05;
-
+const startCoords = { x: 0, y: 20, z: 0 };
 
 // Zoom parameters
 const minZoom = 5;  // Closest zoom level
@@ -282,16 +282,16 @@ function holeCollision(ball, hole) {
 
 
 function checkWaterCollision(ball, waterMesh) {
-    const ballPos = ball.position;
-    const waterPos = waterMesh.position;
+    // Calculate the bounding box of the water
+    const waterBoundingBox = new THREE.Box3().setFromObject(waterMesh);
 
-    const withinX = ballPos.x >= waterPos.x - 2 && ballPos.x <= waterPos.x + 2;
-    const withinY = ballPos.y >= waterPos.y - 3 && ballPos.y <= waterPos.y;
-
-    if (withinX && withinY) {
-        scene.remove(ball);
-        ball.geometry.dispose();
-        ball.material.dispose();
+    // Get the ball's position
+    const ballPosition = ball.position;
+    // Check if the ball's y-position is below the water's y-position
+    if (waterBoundingBox.containsPoint(ballPosition)) {
+        velocity.x = 0;
+        velocity.y = 0;
+        ball.position.set(startCoords.x, startCoords.y, startCoords.z);
         console.log("SPLASH!");
     }
 }
@@ -301,8 +301,6 @@ function checkCollisionsWithWater(ball, waterShapes) {
     for (const waterMesh of waterShapes) {
         checkWaterCollision(ball, waterMesh);
     }
-
-    console.log("No collision with any water shape.");
     return false;  // Return false if no collisions are detected
 }
 
