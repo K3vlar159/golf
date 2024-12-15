@@ -271,17 +271,25 @@ function createSandShapes(terrainPoints, count) {
 }
 
 function followBall() {
-    // Smoothly interpolate the camera position to follow the ball
     const targetX = ball.position.x;
     const targetY = ball.position.y;
 
-    // Update the camera position smoothly, but lock the Z-axis and prevent rotation
+    // Smoothly interpolate the camera position
     camera.position.x += (targetX - camera.position.x) * cameraSpeed;
     camera.position.y += (targetY - camera.position.y) * cameraSpeed;
 
-    // Lock the Z position of the camera
-    camera.position.z = 10; // Keep a fixed distance above the scene
+    // Calculate the visible half-width and half-height of the camera view
+    const halfViewWidth = (camera.right - camera.left) / 2;
+    const halfViewHeight = (camera.top - camera.bottom) / 2;
 
-    // Keep the camera looking straight down on the XY plane
+    // Clamp the camera position so its edges don't go past the terrain borders
+    const minX = -terrainWidth / 2 + halfViewWidth; // Left terrain border
+    const maxX = terrainWidth / 2 - halfViewWidth;  // Right terrain border
+
+    camera.position.x = Math.max(minX, Math.min(camera.position.x, maxX));
+
+    // Keep the camera looking straight down at the XY plane
+    camera.position.z = 10; // Fixed height
     camera.lookAt(camera.position.x, camera.position.y, 0);
 }
+
