@@ -88,12 +88,42 @@ function createTerrainMesh() {
     terrainPoints = terrainVertices;
 
     const geometry = new THREE.ShapeGeometry(shape);
-    const material = new THREE.MeshBasicMaterial({
-        color: 0x228B22,
-        side: THREE.DoubleSide
+    // Shader
+    const shaderMaterial = new THREE.ShaderMaterial({
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            varying vec2 vUv;
+
+            uniform vec3 baseColor;
+            uniform vec3 lightDirection;
+            uniform float lightIntensity;
+
+            void main() {
+            // Simple lighting model
+            float dotProduct = dot(normalize(lightDirection), normalize(vec3(vUv, 0.0)));
+            float diffuse = max(dotProduct, 0.0);
+
+            // Pastel color with lighting
+            vec3 finalColor = baseColor * (1.0 + diffuse * lightIntensity);
+
+            gl_FragColor = vec4(finalColor, 1.0);
+            }
+            `,
+        uniforms: {
+            baseColor: { value: new THREE.Color(0xCAF481) },
+            lightDirection: { value: new THREE.Vector3(27, 17, 5) },
+            lightIntensity: { value: 0.10 }
+        },
+        side: THREE.DoubleSide,
     });
 
-    return new THREE.Mesh(geometry, material);
+    return new THREE.Mesh(geometry, shaderMaterial);
 }
 
 export { createTerrainMesh, terrainPoints, terrainWidth, minTerrainHeight };
