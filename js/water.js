@@ -1,7 +1,7 @@
 // Assumes `terrainPoints` is an array of { x, y } objects representing the 2D terrain.
 // Assumes a `scene` variable exists for Three.js.
 export { generateWater };
-const WATER_RANGE = 5; // Maximum range to look for the valley
+const WATER_RANGE = 10; // Maximum range to look for the valley
 const yThreshold = 0.1; // Allowable height difference between start and end points
 
 function generateWater(terrainPoints) {
@@ -11,7 +11,7 @@ function generateWater(terrainPoints) {
     }
 
     let attempts = 0;
-    const maxAttempts = 10;  // Maximum number of attempts to find a suitable valley
+    const maxAttempts = 20;  // Maximum number of attempts to find a suitable valley
 
     while (attempts < maxAttempts) {
         // Ensure the random index is not within the first 10 or last 10 points
@@ -42,10 +42,10 @@ function generateWater(terrainPoints) {
 
         // If no suitable valley is found, increase attempts and try again
         attempts++;
-        console.log(`Attempt ${attempts} failed to find a suitable valley.`);
+        //console.log(`Attempt ${attempts} failed to find a suitable valley.`);
     }
 
-    console.warn("No suitable valley found after 10 attempts.");
+    console.warn("No suitable valley found after attempts.");
     return null;
 }
 

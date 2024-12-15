@@ -7,7 +7,7 @@ const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
 const WATER_RESET = true;
 
-import { createTerrainMesh, terrainPoints, terrainWidth } from './terrain.js';
+import { createTerrainMesh, terrainPoints, terrainWidth,minTerrainHeight } from './terrain.js';
 import { applyPhysics, velocity} from './physics.js';
 import { generateWater} from './water.js';
 import { generateSand,sandPoints} from './sand.js';
@@ -285,8 +285,10 @@ function followBall() {
     // Clamp the camera position so its edges don't go past the terrain borders
     const minX = -terrainWidth / 2 + halfViewWidth; // Left terrain border
     const maxX = terrainWidth / 2 - halfViewWidth;  // Right terrain border
+    const minY = minTerrainHeight + halfViewHeight; // Bottom terrain border
 
     camera.position.x = Math.max(minX, Math.min(camera.position.x, maxX));
+    camera.position.y = Math.max(minY,camera.position.y);
 
     // Keep the camera looking straight down at the XY plane
     camera.position.z = 10; // Fixed height
