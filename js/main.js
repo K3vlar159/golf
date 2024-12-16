@@ -46,6 +46,7 @@ const softColorShaderMaterial = new THREE.ShaderMaterial({
 import { createTerrainMesh, terrainPoints, terrainWidth,minTerrainHeight } from './terrain.js';
 import { applyPhysics, velocity} from './physics.js';
 import { generateWater} from './water.js';
+import { uniforms } from './water.js';
 import { generateSand,sandPoints} from './sand.js';
 import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp} from './controls.js';
 
@@ -88,6 +89,7 @@ function render() {
 
     holeCollision();
     checkCollisionsWithWater();
+    uniforms.time.value += 0.07;
 
     //checkBoosterCollision(ball, booster, velocity);
     //checkBumperCollision(ball, bumper, velocity);

@@ -76,8 +76,41 @@ function createSandShape(startPoint, endPoint, midPoints) {
     }
 
     // Material for water mesh
-    const material = new THREE.MeshBasicMaterial({ color: 'rgb(227,205,74)', transparent: false, opacity: 1 });
-    const sandMesh = new THREE.Mesh(geometry, material);
+    const shaderMaterial = new THREE.ShaderMaterial({
+        vertexShader: `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+        fragmentShader:  `
+        uniform float time;
+        uniform vec3 sandColor1;
+        uniform vec3 sandColor2;
+        varying vec2 vUv;
+
+        float random(vec2 st) {
+            return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+        }
+
+        void main() {
+            float grain = random(vUv * 100.0); 
+            vec3 color = mix(sandColor1, sandColor2, grain);
+            float wave = sin(vUv.y * 10.0 + time * 2.0) * 0.01;
+            vec3 finalColor = color + wave;
+            gl_FragColor = vec4(finalColor, 1.0);
+        }
+    `,
+        uniforms: {
+            time: { value: 0.0 },
+            sandColor1: { value: new THREE.Color(0xf4e7b5) }, // Svetlá piesková farba
+            sandColor2: { value: new THREE.Color(0xe5c07b) }  // Tmavšia piesková farba
+        },
+        side: THREE.DoubleSide,
+    });
+
+    const sandMesh = new THREE.Mesh(geometry, shaderMaterial);
 
     return sandMesh;
 }

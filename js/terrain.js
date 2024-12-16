@@ -3,7 +3,7 @@ const terrainWidth = 200;
 const maxTerrainHeight = 20;
 const minTerrainHeight = -15;
 const detailLevel = 7 // Number of iterations (use smaller numbers for less detail)
-const roughness = 0.6; // Controls how jagged the terrain is/hill height (0.1 to 1.0)
+const roughness = 0.3; // Controls how jagged the terrain is/hill height (0.1 to 1.0)
 let terrainPoints;
 
 function generateTerrain(width, maxH, minH, detail, roughness) {
@@ -116,9 +116,9 @@ function createTerrainMesh() {
             }
             `,
         uniforms: {
-            baseColor: { value: new THREE.Color(0xCAF481) },
-            lightDirection: { value: new THREE.Vector3(27, 17, 5) },
-            lightIntensity: { value: 0.10 }
+            baseColor: { value: new THREE.Color(0x165b13) },
+            lightDirection: { value: new THREE.Vector3(0.11, -10, 0) },
+            lightIntensity: { value: 0.3 }
         },
         side: THREE.DoubleSide,
     });
