@@ -8,6 +8,9 @@ const numberOfSands = 5;
 const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
 const WATER_RESET = true;
+// object arrays
+const bumpers = [];
+const boosters = [];
 
 const softColorShaderMaterial = new THREE.ShaderMaterial({
     vertexShader: `
@@ -48,7 +51,7 @@ import { applyPhysics, velocity} from './physics.js';
 import { generateWater} from './water.js';
 import { uniforms } from './water.js';
 import { generateSand,sandPoints} from './sand.js';
-import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp} from './controls.js';
+import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp, onMouseClick} from './controls.js';
 
 export { terrain, ball, ballRadius, camera, guideLine};
 
@@ -76,6 +79,7 @@ function init() {
     renderer.domElement.addEventListener('mouseup', onMouseUp);
     renderer.domElement.addEventListener('wheel', onMouseWheel);
     window.addEventListener('resize', onWindowResize);
+    window.addEventListener('click', onMouseClick);
 
     createScoreDisplay();
 }
@@ -91,8 +95,8 @@ function render() {
     checkCollisionsWithWater();
     uniforms.time.value += 0.07;
 
-    //checkBoosterCollision(ball, booster, velocity);
-    //checkBumperCollision(ball, bumper, velocity);
+    checkBoosterCollision(ball, velocity);
+    checkBumperCollision(ball, velocity);
     //checkPortalCollision(ball, portal);
     //checkSandCollision(ball,sandpit,velocity);
 }
@@ -181,7 +185,7 @@ function checkCollisionsWithWater() {
 }
 
 
-function createBooster(position) {
+export function createBooster(position) {
     const boosterShape = new THREE.Shape();
     boosterShape.moveTo(0.8, 0.2);
     boosterShape.lineTo(0.8, -0.2);
@@ -195,25 +199,29 @@ function createBooster(position) {
     booster.position.set(position.x, position.y, 0);
     scene.add(booster);
 
+    boosters.push(booster);
+
     return booster;
 }
 
-function checkBoosterCollision(ball, booster, velocity) {
+function checkBoosterCollision(ball, velocity) {
     const ballPos = ball.position;
-    const boosterPos = booster.position;
+    for (const booster of boosters) {
+        const boosterPos = booster.position;
 
-    const withinX = ballPos.x >= boosterPos.x - 0.8 && ballPos.x <= boosterPos.x + 0.8;
-    const withinY = ballPos.y >= boosterPos.y - 0.2 && ballPos.y <= boosterPos.y + 0.2;
+        const withinX = ballPos.x >= boosterPos.x - 0.8 && ballPos.x <= boosterPos.x + 0.8;
+        const withinY = ballPos.y >= boosterPos.y - 0.2 && ballPos.y <= boosterPos.y + 0.2;
 
-    if (withinX && withinY) {
-        velocity.x += 0.08;
-        console.log("Speed boost!");
-        multi += 1;
-        drawScore();
+        if (withinX && withinY) {
+            velocity.x += 0.08;
+            console.log("Speed boost!");
+            multi += 1;
+            drawScore();
+        }
     }
 }
 
-function createBumper(position) {
+export function createBumper(position) {
     const shape = new THREE.Shape();
     shape.moveTo(0.8, 0.2);
     shape.lineTo(0.8, -0.2);
@@ -228,20 +236,25 @@ function createBumper(position) {
     bumper.position.set(position.x, position.y, 0);
     scene.add(bumper);
 
+    bumpers.push(bumper);
+
     return bumper;
 }
 
-function checkBumperCollision(ball, bumper, velocity) {
+function checkBumperCollision(ball, velocity) {
     const ballPos = ball.position;
-    const bumperPos = bumper.position;
+    for (const bumper of bumpers) {
+        const bumperPos = bumper.position;
 
-    const withinX = ballPos.x >= bumperPos.x - 1 && ballPos.x <= bumperPos.x + 1;
-    const withinY = ballPos.y >= bumperPos.y - 1 && ballPos.y <= bumperPos.y + 0.8;
+        const withinX = ballPos.x >= bumperPos.x - 1 && ballPos.x <= bumperPos.x + 1;
+        const withinY = ballPos.y >= bumperPos.y - 1 && ballPos.y <= bumperPos.y + 0.8;
 
-    if (withinX && withinY) {
-        velocity.x *= -1.5;
-        velocity.y *= -1.5;
-        console.log("Bounce!");
+        if (withinX && withinY) {
+            velocity.x *= -1.5;
+            velocity.y *= -1.5;
+            console.log("Bounce!");
+            break;
+        }
     }
 }
 
