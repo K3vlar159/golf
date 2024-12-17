@@ -289,24 +289,6 @@ function checkPortalCollision(ball, portal) {
     }
 }
 
-
-function checkSandCollision(ball, sand, velocity) {
-    const ballPos = ball.position;
-    const sandPos = sand.position;
-
-    const halfWidth = sand.geometry.parameters.width / 2;
-    const halfHeight = sand.geometry.parameters.height / 2;
-
-    const withinX = ballPos.x >= sandPos.x - halfWidth && ballPos.x <= sandPos.x + halfWidth;
-    const withinY = ballPos.y >= sandPos.y - halfHeight && ballPos.y <= sandPos.y + halfHeight;
-
-    if (withinX && withinY) {
-        velocity.x *= 0.7;
-        velocity.y *= 0.5;
-        //console.log("Slowed down in the sand!");
-    }
-}
-
 function createWaterShapes(terrainPoints, count) {
     const waterShapes = [];
 
