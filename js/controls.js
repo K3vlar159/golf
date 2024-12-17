@@ -17,7 +17,7 @@ let currentMode = MODE_CONTROLLING_BALL; // Start with ball control mode
 
 export {onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp, isDragging, onMouseClick};
 import {camera, guideLine, ball, createBumper,createBooster, terrain} from './main.js';
-import {velocity} from './physics.js';
+import {velocity, getTerrainHeightAt} from './physics.js';
 
 
 
@@ -192,21 +192,20 @@ function onMouseClick(event) {
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
 
-    // Check for intersections with the ground or other objects based on the mode
-    if (currentMode === MODE_ADDING_BUMPER) {
-        const intersects = raycaster.intersectObject(terrain); // Assuming terrain is your ground object
+    if (currentMode === MODE_ADDING_BUMPER || currentMode === MODE_ADDING_BOOSTER) {
+        const intersects = raycaster.intersectObject(terrain);
         if (intersects.length > 0) {
             const intersectPoint = intersects[0].point;
-            // Create a bumper at the intersection point
-            createBumper(new THREE.Vector3(intersectPoint.x, intersectPoint.y, 0));
-        }
-    } else if (currentMode === MODE_ADDING_BOOSTER) {
-        const intersects = raycaster.intersectObject(terrain); // Assuming terrain is your ground object
-        if (intersects.length > 0) {
-            const intersectPoint = intersects[0].point;
-            // Create a bumper at the intersection point
-            createBooster(new THREE.Vector3(intersectPoint.x, intersectPoint.y, 0));
-        }
 
+            const terrainHeight = getTerrainHeightAt(intersectPoint.x);
+
+            const placementPosition = new THREE.Vector3(intersectPoint.x, terrainHeight, intersectPoint.z);
+
+            if (currentMode === MODE_ADDING_BUMPER) {
+                createBumper(placementPosition);
+            } else if (currentMode === MODE_ADDING_BOOSTER) {
+                createBooster(placementPosition);
+            }
+        }
     }
 }

@@ -15,7 +15,7 @@ import { sandPoints} from './sand.js';
 
 export { applyPhysics, velocity, gravity};
 
-function getTerrainHeightAt(x) {
+export function getTerrainHeightAt(x) {
     let closestPointLeft = null;
     let closestPointRight = null;
 
