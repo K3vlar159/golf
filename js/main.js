@@ -131,7 +131,7 @@ function addObjects(){
 
     // Golf hole
     const holeGeometry = new THREE.CircleGeometry(ballRadius*2, 32);
-    const holeMaterial = new THREE.MeshBasicMaterial({color: 'rgb(0,0,0)' });
+    const holeMaterial = new THREE.MeshBasicMaterial({color: 0x87ceeb });
     hole = new THREE.Mesh(holeGeometry, holeMaterial);
     hole.position.set(terrainPoints[terrainPoints.length-10].x, terrainPoints[terrainPoints.length-10].y, 0);
     scene.add(hole);
