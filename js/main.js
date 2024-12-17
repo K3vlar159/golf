@@ -231,7 +231,8 @@ function checkBoosterCollision(ball, velocity) {
         const withinY = ballPos.y >= boosterPos.y - 0.2 && ballPos.y <= boosterPos.y + 0.2;
 
         if (withinX && withinY) {
-            velocity.x += 0.08;
+            velocity.x += 0.3;
+            velocity.y += 0.03;
             console.log("Speed boost!");
             multi += 1;
             drawScore();
