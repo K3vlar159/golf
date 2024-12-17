@@ -15,7 +15,7 @@ const MODE_ADDING_BOOSTER = 'addingBooster';
 
 let currentMode = MODE_CONTROLLING_BALL; // Start with ball control mode
 
-export {onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp, isDragging, onMouseClick};
+export {onMouseWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, onMouseClick, currentZoom};
 import {camera, guideLine, ball, createBumper,createBooster, terrain} from './main.js';
 import {velocity, getTerrainHeightAt} from './physics.js';
 
@@ -56,19 +56,7 @@ function switchModeW() {
 }
 
 
-function onWindowResize() {
-    const aspect = window.innerWidth / window.innerHeight;
 
-    // Adjust camera frustum based on current zoom
-    const zoomFactor = currentZoom / 10;
-    camera.left = -10 * aspect * zoomFactor;
-    camera.right = 10 * aspect * zoomFactor;
-    camera.top = 10 * zoomFactor;
-    camera.bottom = -10 * zoomFactor;
-
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
 
 function onMouseWheel(event) {
     // Prevent default scroll behavior

@@ -51,12 +51,26 @@ import { applyPhysics, velocity, setGravity} from './physics.js';
 import { generateWater} from './water.js';
 import { uniforms } from './water.js';
 import { generateSand,sandPoints} from './sand.js';
-import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp, onMouseClick} from './controls.js';
+import { onMouseWheel, onMouseDown, onMouseMove, onMouseUp, onMouseClick, currentZoom} from './controls.js';
 
 export { terrain, ball, ballRadius, camera, guideLine};
 
 init();
 render();
+
+function onWindowResize() {
+    const aspect = window.innerWidth / window.innerHeight;
+
+    // Adjust camera frustum based on current zoom
+    const zoomFactor = currentZoom / 10;
+    camera.left = -10 * aspect * zoomFactor;
+    camera.right = 10 * aspect * zoomFactor;
+    camera.top = 10 * zoomFactor;
+    camera.bottom = -10 * zoomFactor;
+
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
 
 function init() {
     const aspect = window.innerWidth / window.innerHeight;
@@ -235,7 +249,7 @@ export function createBumper(position) {
 
     const geometry = new THREE.ShapeGeometry(shape);
     const material = softColorShaderMaterial.clone();
-    material.uniforms.baseColor.value = new THREE.Color('rgb(119,78,174)');
+    material.uniforms.baseColor.value = new THREE.Color('rgb(255,167,0)');
     const bumper = new THREE.Mesh(geometry, material);
     bumper.position.set(position.x, position.y, 0);
     scene.add(bumper);
@@ -254,7 +268,7 @@ function checkBumperCollision(ball, velocity) {
         const withinY = ballPos.y >= bumperPos.y - 1 && ballPos.y <= bumperPos.y + 0.8;
 
         if (withinX && withinY) {
-            velocity.x *= 2;
+            velocity.x = velocity.x * 2 +0.1;
             velocity.y = 0.8;
             console.log("Bounce!");
             break;
