@@ -1,17 +1,57 @@
 let camera, scene, renderer, ball, terrain, guideLine, hole, water, sand;
-let ground, booster, bumper, portal, sandpit;
+let score = 0; // Initialize the score
+let scoreCanvas, scoreContext, scoreTexture, scorePlane;
+let multi = 1;
 const ballRadius = 0.25;
 const numberOfWaters = 5;
 const numberOfSands = 5;
 const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
 const WATER_RESET = true;
+// object arrays
+const bumpers = [];
+const boosters = [];
+
+const softColorShaderMaterial = new THREE.ShaderMaterial({
+    vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+    fragmentShader: `
+            varying vec2 vUv;
+
+            uniform vec3 baseColor;
+            uniform vec3 lightDirection;
+            uniform float lightIntensity;
+
+            void main() {
+            // Simple lighting model
+            float dotProduct = dot(normalize(lightDirection), normalize(vec3(vUv, 0.0)));
+            float diffuse = max(dotProduct, 0.0);
+
+            // Pastel color with lighting
+            vec3 finalColor = baseColor * (1.0 + diffuse * lightIntensity);
+
+            gl_FragColor = vec4(finalColor, 1.0);
+            }
+            `,
+    uniforms: {
+        baseColor: { value: new THREE.Color(0xCAF481) },
+        lightDirection: { value: new THREE.Vector3(9, 4, 5) },
+        lightIntensity: { value: 0.3 }
+    },
+    side: THREE.DoubleSide,
+});
 
 import { createTerrainMesh, terrainPoints, terrainWidth,minTerrainHeight } from './terrain.js';
 import { applyPhysics, velocity, setGravity} from './physics.js';
 import { generateWater} from './water.js';
+import { uniforms } from './water.js';
 import { generateSand,sandPoints} from './sand.js';
-import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp} from './controls.js';
+import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp, onMouseClick} from './controls.js';
 
 export { terrain, ball, ballRadius, camera, guideLine};
 
@@ -31,6 +71,8 @@ function init() {
     const slider = document.getElementById("gravitySlider");
 
     scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+
     addObjects();
 
     // Event listeners
@@ -41,6 +83,9 @@ function init() {
     renderer.domElement.addEventListener('mouseup', onMouseUp);
     renderer.domElement.addEventListener('wheel', onMouseWheel);
     window.addEventListener('resize', onWindowResize);
+    window.addEventListener('click', onMouseClick);
+
+    createScoreDisplay();
 }
 
 function render() {
@@ -52,9 +97,10 @@ function render() {
 
     holeCollision();
     checkCollisionsWithWater();
+    uniforms.time.value += 0.07;
 
-    //checkBoosterCollision(ball, booster, velocity);
-    //checkBumperCollision(ball, bumper, velocity);
+    checkBoosterCollision(ball, velocity);
+    checkBumperCollision(ball, velocity);
     //checkPortalCollision(ball, portal);
     //checkSandCollision(ball,sandpit,velocity);
 }
@@ -62,7 +108,8 @@ function render() {
 function addObjects(){
     // Ball
     const ballGeometry = new THREE.CircleGeometry(ballRadius, 32);
-    const ballMaterial = new THREE.MeshBasicMaterial({ color: 'rgb(255,255,255)' });
+    const ballMaterial = softColorShaderMaterial.clone();
+    ballMaterial.uniforms.baseColor.value = new THREE.Color(0xfcb0bb);
     ball = new THREE.Mesh(ballGeometry, ballMaterial); // full ball
     ball.position.set(startCoords.x, startCoords.y,startCoords.z);
     scene.add(ball);
@@ -115,6 +162,9 @@ function holeCollision() {
         //ball.material.dispose();
 
         console.log("Birdie!");
+        // Increment score and update the canvas texture
+        score = score + (100 * multi);
+        drawScore();
     }
 }
 
@@ -139,7 +189,7 @@ function checkCollisionsWithWater() {
 }
 
 
-function createBooster(position) {
+export function createBooster(position) {
     const boosterShape = new THREE.Shape();
     boosterShape.moveTo(0.8, 0.2);
     boosterShape.lineTo(0.8, -0.2);
@@ -147,28 +197,35 @@ function createBooster(position) {
     boosterShape.lineTo(-0.8, 0.2);
 
     const geometry = new THREE.ShapeGeometry(boosterShape);
-    const material = new THREE.MeshBasicMaterial({ color: 0x801ec4 });
+    const material = softColorShaderMaterial.clone();
+    material.uniforms.baseColor.value = new THREE.Color(0x8b32b8);
     const booster = new THREE.Mesh(geometry, material);
     booster.position.set(position.x, position.y, 0);
     scene.add(booster);
 
+    boosters.push(booster);
+
     return booster;
 }
 
-function checkBoosterCollision(ball, booster, velocity) {
+function checkBoosterCollision(ball, velocity) {
     const ballPos = ball.position;
-    const boosterPos = booster.position;
+    for (const booster of boosters) {
+        const boosterPos = booster.position;
 
-    const withinX = ballPos.x >= boosterPos.x - 0.8 && ballPos.x <= boosterPos.x + 0.8;
-    const withinY = ballPos.y >= boosterPos.y - 0.2 && ballPos.y <= boosterPos.y + 0.2;
+        const withinX = ballPos.x >= boosterPos.x - 0.8 && ballPos.x <= boosterPos.x + 0.8;
+        const withinY = ballPos.y >= boosterPos.y - 0.2 && ballPos.y <= boosterPos.y + 0.2;
 
-    if (withinX && withinY) {
-        velocity.x += 0.08;
-        console.log("Speed boost!");
+        if (withinX && withinY) {
+            velocity.x += 0.08;
+            console.log("Speed boost!");
+            multi += 1;
+            drawScore();
+        }
     }
 }
 
-function createBumper(position) {
+export function createBumper(position) {
     const shape = new THREE.Shape();
     shape.moveTo(0.8, 0.2);
     shape.lineTo(0.8, -0.2);
@@ -177,25 +234,31 @@ function createBumper(position) {
     shape.closePath();
 
     const geometry = new THREE.ShapeGeometry(shape);
-    const material = new THREE.MeshBasicMaterial({ color: 0x4fa7ea });
+    const material = softColorShaderMaterial.clone();
+    material.uniforms.baseColor.value = new THREE.Color(0x4fa7ea);
     const bumper = new THREE.Mesh(geometry, material);
     bumper.position.set(position.x, position.y, 0);
     scene.add(bumper);
 
+    bumpers.push(bumper);
+
     return bumper;
 }
 
-function checkBumperCollision(ball, bumper, velocity) {
+function checkBumperCollision(ball, velocity) {
     const ballPos = ball.position;
-    const bumperPos = bumper.position;
+    for (const bumper of bumpers) {
+        const bumperPos = bumper.position;
 
-    const withinX = ballPos.x >= bumperPos.x - 1 && ballPos.x <= bumperPos.x + 1;
-    const withinY = ballPos.y >= bumperPos.y - 1 && ballPos.y <= bumperPos.y + 0.8;
+        const withinX = ballPos.x >= bumperPos.x - 1 && ballPos.x <= bumperPos.x + 1;
+        const withinY = ballPos.y >= bumperPos.y - 1 && ballPos.y <= bumperPos.y + 0.8;
 
-    if (withinX && withinY) {
-        velocity.x *= -1.5;
-        velocity.y *= -1.5;
-        console.log("Bounce!");
+        if (withinX && withinY) {
+            velocity.x *= -1.5;
+            velocity.y *= -1.5;
+            console.log("Bounce!");
+            break;
+        }
     }
 }
 
@@ -304,3 +367,45 @@ function adjustGravity(event){
     setGravity(-newGravity);
     console.log(`Gravity set to: ${-newGravity}`);
 }
+function createScoreDisplay() {
+    // Create a canvas for the score
+    scoreCanvas = document.createElement('canvas');
+    scoreCanvas.width = 512; // Adjust resolution
+    scoreCanvas.height = 256;
+    scoreContext = scoreCanvas.getContext('2d');
+
+    // Create a texture from the canvas
+    scoreTexture = new THREE.CanvasTexture(scoreCanvas);
+
+    // Create a plane geometry to display the texture
+    const planeGeometry = new THREE.PlaneGeometry(5, 2); // Adjust size
+    const planeMaterial = new THREE.MeshBasicMaterial({ map: scoreTexture, transparent: true });
+    scorePlane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+    // Position and add to the scene
+    scorePlane.position.set(startCoords.x, startCoords.y, 0); // Adjust position to fit your scene
+    scene.add(scorePlane);
+
+    // Draw the initial score AFTER initializing the texture
+    drawScore();
+}
+
+
+function drawScore() {
+    // Clear the canvas
+    scoreContext.clearRect(0, 0, scoreCanvas.width, scoreCanvas.height);
+
+    // Draw background
+    scoreContext.fillStyle = '#000000'; // Black background
+    scoreContext.fillRect(0, 0, scoreCanvas.width, scoreCanvas.height);
+
+    // Draw text
+    scoreContext.fillStyle = '#FFFFFF'; // White text
+    scoreContext.font = '48px Arial'; // Font style and size
+    scoreContext.fillText(`Score: ${score}`, 50, 100); // Position the text
+    scoreContext.fillText(`Multiplier: ${multi}`, 50,200);
+
+    // Update texture
+    scoreTexture.needsUpdate = true;
+}
+

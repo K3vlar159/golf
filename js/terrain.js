@@ -3,7 +3,7 @@ const terrainWidth = 200;
 const maxTerrainHeight = 20;
 const minTerrainHeight = -15;
 const detailLevel = 7 // Number of iterations (use smaller numbers for less detail)
-const roughness = 0.6; // Controls how jagged the terrain is/hill height (0.1 to 1.0)
+const roughness = 0.3; // Controls how jagged the terrain is/hill height (0.1 to 1.0)
 let terrainPoints;
 
 function generateTerrain(width, maxH, minH, detail, roughness) {
@@ -88,12 +88,42 @@ function createTerrainMesh() {
     terrainPoints = terrainVertices;
 
     const geometry = new THREE.ShapeGeometry(shape);
-    const material = new THREE.MeshBasicMaterial({
-        color: 0x228B22,
-        side: THREE.DoubleSide
+    // Shader
+    const shaderMaterial = new THREE.ShaderMaterial({
+        vertexShader: `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            varying vec2 vUv;
+
+            uniform vec3 baseColor;
+            uniform vec3 lightDirection;
+            uniform float lightIntensity;
+
+            void main() {
+            // Simple lighting model
+            float dotProduct = dot(normalize(lightDirection), normalize(vec3(vUv, 0.0)));
+            float diffuse = max(dotProduct, 0.0);
+
+            // Pastel color with lighting
+            vec3 finalColor = baseColor * (1.0 + diffuse * lightIntensity);
+
+            gl_FragColor = vec4(finalColor, 1.0);
+            }
+            `,
+        uniforms: {
+            baseColor: { value: new THREE.Color(0x165b13) },
+            lightDirection: { value: new THREE.Vector3(0.11, -10, 0) },
+            lightIntensity: { value: 0.3 }
+        },
+        side: THREE.DoubleSide,
     });
 
-    return new THREE.Mesh(geometry, material);
+    return new THREE.Mesh(geometry, shaderMaterial);
 }
 
 export { createTerrainMesh, terrainPoints, terrainWidth, minTerrainHeight };

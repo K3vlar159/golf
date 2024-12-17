@@ -9,12 +9,51 @@ const maxPullLength = 1.4;
 const launchStrength = 0.5; // Increased for more powerful launches
 let isDragging = false;
 
-export {onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp, isDragging};
-import { camera, guideLine, ball} from './main.js';
+const MODE_ADDING_BUMPER = 'addingBumper';
+const MODE_CONTROLLING_BALL = 'controllingBall';
+const MODE_ADDING_BOOSTER = 'addingBooster';
+
+let currentMode = MODE_CONTROLLING_BALL; // Start with ball control mode
+
+export {onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp, isDragging, onMouseClick};
+import {camera, guideLine, ball, createBumper,createBooster, terrain} from './main.js';
 import {velocity} from './physics.js';
 
 
 
+// Add keyboard event listener to switch modes with the 'Q' key
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'q' || event.key === 'Q') {
+        switchModeQ();
+    }
+});
+
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'w' || event.key === 'W') {
+        switchModeW();
+    }
+});
+
+// Function to switch the mode
+function switchModeQ() {
+    if (currentMode === MODE_CONTROLLING_BALL) {
+        currentMode = MODE_ADDING_BUMPER;
+        console.log('Switched to bumper adding mode');
+    } else {
+        currentMode = MODE_CONTROLLING_BALL;
+        console.log('Switched to ball control mode');
+    }
+}
+
+function switchModeW() {
+    if (currentMode === MODE_CONTROLLING_BALL) {
+        currentMode = MODE_ADDING_BOOSTER;
+        console.log('Switched to booster adding mode');
+    } else {
+        currentMode = MODE_CONTROLLING_BALL;
+        console.log('Switched to ball control mode');
+    }
+}
 
 
 function onWindowResize() {
@@ -58,27 +97,28 @@ function onMouseWheel(event) {
 }
 
 function onMouseDown(event) {
-    let mouse = new THREE.Vector2(
-        (event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1
-    );
+    if (currentMode === MODE_CONTROLLING_BALL) {
+        let mouse = new THREE.Vector2(
+            (event.clientX / window.innerWidth) * 2 - 1,
+            -(event.clientY / window.innerHeight) * 2 + 1
+        );
 
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObject(ball);
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObject(ball);
 
-    if (intersects.length > 0) {
-        isDragging = true ;
-        velocity.set(0, 0); // Reset velocity while pulling
-
-        // Set pull origin to the current ball position in world coordinates
-        pullOrigin.copy(ball.getWorldPosition(new THREE.Vector3()));
-        guideLine.visible = true; // Show the guide line
+        if (intersects.length > 0) {
+            isDragging = true;
+            velocity.set(0, 0);
+            pullOrigin.copy(ball.getWorldPosition(new THREE.Vector3()));
+            guideLine.visible = true;
+        }
     }
 }
 
+
 function onMouseMove(event) {
-    if (isDragging) {
+    if (isDragging && currentMode === MODE_CONTROLLING_BALL) {
         let mouse = new THREE.Vector2(
             (event.clientX / window.innerWidth) * 2 - 1,
             -(event.clientY / window.innerHeight) * 2 + 1
@@ -87,31 +127,24 @@ function onMouseMove(event) {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(mouse, camera);
 
-        // Get the mouse position in 3D space
         const mousePos = new THREE.Vector3();
         const intersected = raycaster.ray.intersectPlane(
             new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
             mousePos
         );
 
-        if (!intersected) {
-            // If no intersection, keep the line visible at the last valid point
-            return;
-        }
+        if (!intersected) return;
 
-        // Calculate the pull vector from the ball's world position to the mouse position
         const ballWorldPos = ball.getWorldPosition(new THREE.Vector3());
         let pullVector = new THREE.Vector3().subVectors(mousePos, ballWorldPos);
 
-        // Clamp the pull vector length to the maximum pull length
         if (pullVector.length() > maxPullLength) {
             pullVector.setLength(maxPullLength);
         }
 
-        // Update the guideline geometry
         const points = [
-            new THREE.Vector3(0, 0, 0),  // Start at ball's local origin
-            new THREE.Vector3(0, 0, 0).sub(pullVector)  // End point in local coordinates
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 0, 0).sub(pullVector)
         ];
 
         guideLine.geometry.setFromPoints(points);
@@ -119,9 +152,9 @@ function onMouseMove(event) {
     }
 }
 
+
 function onMouseUp(event) {
-    if (isDragging) {
-        // Calculate mouse position relative to the scene
+    if (isDragging && currentMode === MODE_CONTROLLING_BALL) {
         const mouse = new THREE.Vector2(
             (event.clientX / window.innerWidth) * 2 - 1,
             -(event.clientY / window.innerHeight) * 2 + 1
@@ -130,20 +163,16 @@ function onMouseUp(event) {
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(mouse, camera);
 
-        // Get the mouse position in 3D space, specifically at a fixed Z position (ground level)
         const mousePos = new THREE.Vector3();
         raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), mousePos);
 
-        // Calculate the pull vector from the ball's world position to the mouse position
         const ballWorldPos = ball.getWorldPosition(new THREE.Vector3());
         let pullVector = new THREE.Vector3().subVectors(mousePos, ballWorldPos);
 
-        // Clamp the pull vector length to the maximum pull length
         if (pullVector.length() > maxPullLength) {
             pullVector.setLength(maxPullLength);
         }
 
-        // Launch velocity is the opposite of the pull vector
         velocity.set(
             -pullVector.x * launchStrength,
             -pullVector.y * launchStrength
@@ -151,5 +180,33 @@ function onMouseUp(event) {
 
         guideLine.visible = false;
         isDragging = false;
+    }
+}
+
+function onMouseClick(event) {
+    let mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    );
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+
+    // Check for intersections with the ground or other objects based on the mode
+    if (currentMode === MODE_ADDING_BUMPER) {
+        const intersects = raycaster.intersectObject(terrain); // Assuming terrain is your ground object
+        if (intersects.length > 0) {
+            const intersectPoint = intersects[0].point;
+            // Create a bumper at the intersection point
+            createBumper(new THREE.Vector3(intersectPoint.x, intersectPoint.y, 0));
+        }
+    } else if (currentMode === MODE_ADDING_BOOSTER) {
+        const intersects = raycaster.intersectObject(terrain); // Assuming terrain is your ground object
+        if (intersects.length > 0) {
+            const intersectPoint = intersects[0].point;
+            // Create a bumper at the intersection point
+            createBooster(new THREE.Vector3(intersectPoint.x, intersectPoint.y, 0));
+        }
+
     }
 }

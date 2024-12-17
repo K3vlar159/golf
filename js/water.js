@@ -4,6 +4,13 @@ export { generateWater };
 const WATER_RANGE = 10; // Maximum range to look for the valley
 const yThreshold = 0.1; // Allowable height difference between start and end points
 
+export const uniforms= {
+    time: { value: 0.0 },
+    shallowColor: { value: new THREE.Color(0x396fe3) },
+    deepColor: { value: new THREE.Color(0x1319c2) },
+    lightPosition: { value: new THREE.Vector3(10, 10, 10) }
+};
+
 function generateWater(terrainPoints) {
     if (terrainPoints.length < 2) {
         console.error("Insufficient terrain points to generate water.");
@@ -84,8 +91,47 @@ function createWaterShape(startPoint, endPoint, valleyPoints) {
     }
 
     // Material for water mesh
-    const material = new THREE.MeshBasicMaterial({ color: 0x3399ff, transparent: true, opacity: 0.7 });
-    const waterMesh = new THREE.Mesh(geometry, material);
+    let shaderMaterial = new THREE.ShaderMaterial({
+        uniforms: uniforms,
+        vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        uniform float time;
+
+        void main() {
+            vUv = uv;
+            vPosition = position;
+            vec3 pos = position;
+            pos.z += sin(position.x * 5.0 + time) * 0.2;
+            pos.z += sin(position.y * 5.0 + time * 1.5) * 0.2;
+
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+    `,
+        fragmentShader: `
+        uniform float time;
+        uniform vec3 shallowColor;
+        uniform vec3 deepColor;
+        uniform vec3 lightPosition;
+        varying vec2 vUv;
+        varying vec3 vPosition;
+
+        void main() {
+            float depth = smoothstep(0.0, 5.0, vPosition.z);
+            vec3 color = mix(shallowColor, deepColor, depth);
+            vec3 lightDir = normalize(lightPosition - vPosition);
+            float brightness = max(dot(vec3(0.0, 0.0, 1.0), lightDir), 0.0);
+            vec3 reflection = vec3(0.2, 0.4, 0.8) * brightness;
+
+            float wave = sin(vUv.x * 20.0 + time * 3.0) * 0.02;
+            color += wave + reflection;
+
+            gl_FragColor = vec4(color, 1.0);
+        }
+    `
+    });
+
+    const waterMesh = new THREE.Mesh(geometry, shaderMaterial);
 
     return waterMesh;
 }
