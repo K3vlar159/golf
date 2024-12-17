@@ -8,7 +8,7 @@ const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
 const WATER_RESET = true;
 
 import { createTerrainMesh, terrainPoints, terrainWidth,minTerrainHeight } from './terrain.js';
-import { applyPhysics, velocity} from './physics.js';
+import { applyPhysics, velocity, setGravity} from './physics.js';
 import { generateWater} from './water.js';
 import { generateSand,sandPoints} from './sand.js';
 import { onMouseWheel, onWindowResize, onMouseDown, onMouseMove, onMouseUp} from './controls.js';
@@ -28,10 +28,14 @@ function init() {
     renderer.setSize( window.innerWidth, window.innerHeight );
     document.body.appendChild( renderer.domElement );
 
+    const slider = document.getElementById("gravitySlider");
+
     scene = new THREE.Scene();
     addObjects();
 
     // Event listeners
+    slider.addEventListener("input", adjustGravity);
+
     renderer.domElement.addEventListener('mousedown', onMouseDown);
     renderer.domElement.addEventListener('mousemove', onMouseMove);
     renderer.domElement.addEventListener('mouseup', onMouseUp);
@@ -295,3 +299,8 @@ function followBall() {
     camera.lookAt(camera.position.x, camera.position.y, 0);
 }
 
+function adjustGravity(event){
+    const newGravity = parseFloat(event.target.value);
+    setGravity(-newGravity);
+    console.log(`Gravity set to: ${-newGravity}`);
+}

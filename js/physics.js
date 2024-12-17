@@ -1,5 +1,5 @@
 let velocity = new THREE.Vector2();
-const gravity = -0.02; //default -0.02
+let gravity = -0.02; //default -0.02
 const friction = 0.98; //default 0.98
 const groundedDamping = 0.8;
 const rollingFriction = 0.98;
@@ -13,7 +13,7 @@ import { terrain, ball, ballRadius} from './main.js';
 import { isDragging} from './controls.js';
 import { sandPoints} from './sand.js';
 
-export { applyPhysics, velocity };
+export { applyPhysics, velocity, gravity};
 
 function getTerrainHeightAt(x) {
     let closestPointLeft = null;
@@ -178,3 +178,6 @@ function applyPhysics() {
     }
 }
 
+export function setGravity(newGravity) {
+    gravity = newGravity;
+}

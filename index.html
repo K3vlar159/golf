@@ -1,9 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>PC Grafika ThreeJS </title>
+	<title>PC Grafika ThreeJS</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<style>
+		/* Style for slider positioning */
+		#gravitySlider {
+			position: absolute;
+			bottom: 10px;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 300px;
+		}
+		label {
+			position: absolute;
+			bottom: 40px;
+			left: 50%;
+			transform: translateX(-50%);
+			font-size: 14px;
+			color: white; /* Ensure visibility on dark background */
+			z-index: 2; /* Above canvas */
+		}
+		#gravitySlider {
+			pointer-events: auto; /* Ensure the slider receives its own events */
+			position: absolute;
+			bottom: 20px;
+			left: 50%;
+			transform: translateX(-50%);
+			z-index: 2; /* Slider on top of the canvas */
+		}
+
+		canvas {
+			pointer-events: all; /* Ensure the canvas continues to receive events */
+			position: absolute;
+			top: 0;
+			left: 0;
+			z-index: 1;
+		}
+	</style>
 </head>
 
 <script src="js/threejs/build/three.js"></script>
@@ -11,10 +46,18 @@
 
 <body>
 <div id="canvas1">
-
-	<script type="module" src="js/main.js"></script>
+	<label for="gravitySlider">GRAVITY</label>
+	<input
+			type="range"
+			id="gravitySlider"
+			min="0.009"
+			max="0.02"
+			step="0.001"
+			value="0.02"
+	/>
 
 </div>
 
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
