@@ -235,7 +235,7 @@ export function createBumper(position) {
 
     const geometry = new THREE.ShapeGeometry(shape);
     const material = softColorShaderMaterial.clone();
-    material.uniforms.baseColor.value = new THREE.Color(0x4fa7ea);
+    material.uniforms.baseColor.value = new THREE.Color('rgb(119,78,174)');
     const bumper = new THREE.Mesh(geometry, material);
     bumper.position.set(position.x, position.y, 0);
     scene.add(bumper);
@@ -254,8 +254,8 @@ function checkBumperCollision(ball, velocity) {
         const withinY = ballPos.y >= bumperPos.y - 1 && ballPos.y <= bumperPos.y + 0.8;
 
         if (withinX && withinY) {
-            velocity.x *= -1.5;
-            velocity.y *= -1.5;
+            velocity.x *= 2;
+            velocity.y = 0.8;
             console.log("Bounce!");
             break;
         }
