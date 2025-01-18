@@ -15,62 +15,46 @@ const MODE_ADDING_BOOSTER = 'addingBooster';
 
 let currentMode = MODE_CONTROLLING_BALL; // Start with ball control mode
 
-export {onMouseWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, onMouseClick, currentZoom};
-import {camera, guideLine, ball, createBumper,createBooster, terrain} from './main.js';
-import {velocity, getTerrainHeightAt} from './physics.js';
+export { onMouseWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, onMouseClick, currentZoom };
+import { camera, guideLine, ball, createBumper, createBooster, terrain } from './main.js';
+import { velocity, getTerrainHeightAt } from './physics.js';
 
-
-
-// Add keyboard event listener to switch modes with the 'Q' key
-window.addEventListener('keydown', (event) => {
-    if (event.key === 'q' || event.key === 'Q') {
-        switchModeQ();
-    }
+// Mode control buttons
+document.getElementById('modeAddBumper').addEventListener('click', () => {
+    toggleMode(MODE_ADDING_BUMPER, 'modeAddBumper');
 });
 
-window.addEventListener('keydown', (event) => {
-    if (event.key === 'w' || event.key === 'W') {
-        switchModeW();
-    }
+document.getElementById('modeAddBooster').addEventListener('click', () => {
+    toggleMode(MODE_ADDING_BOOSTER, 'modeAddBooster');
 });
 
-// Function to switch the mode
-function switchModeQ() {
-    if (currentMode === MODE_CONTROLLING_BALL) {
-        currentMode = MODE_ADDING_BUMPER;
-        console.log('Switched to bumper adding mode');
-    } else {
+function toggleMode(mode, buttonId) {
+    const button = document.getElementById(buttonId);
+
+    if (currentMode === mode) {
+        // Deselect the current mode and switch back to ball control
         currentMode = MODE_CONTROLLING_BALL;
+        button.classList.remove('active');
         console.log('Switched to ball control mode');
+    } else {
+        // Set the new mode and highlight the button
+        currentMode = mode;
+        document.querySelectorAll('#modeControls button').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        console.log(`Switched to ${mode === MODE_ADDING_BUMPER ? 'bumper adding' : 'booster adding'} mode`);
     }
 }
-
-function switchModeW() {
-    if (currentMode === MODE_CONTROLLING_BALL) {
-        currentMode = MODE_ADDING_BOOSTER;
-        console.log('Switched to booster adding mode');
-    } else {
-        currentMode = MODE_CONTROLLING_BALL;
-        console.log('Switched to ball control mode');
-    }
-}
-
-
-
 
 function onMouseWheel(event) {
     // Prevent default scroll behavior
     event.preventDefault();
 
-    // Adjust zoom based on scroll direction
-    // Smaller delta for smoother zooming
     const zoomSpeed = 0.8;
     currentZoom += event.deltaY > 0 ? zoomSpeed : -zoomSpeed;
 
     // Clamp zoom between min and max values
     currentZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom));
 
-    // Get the current aspect ratio
     const aspect = window.innerWidth / window.innerHeight;
 
     // Update camera frustum
@@ -86,7 +70,7 @@ function onMouseWheel(event) {
 
 function onMouseDown(event) {
     if (currentMode === MODE_CONTROLLING_BALL) {
-        let mouse = new THREE.Vector2(
+        const mouse = new THREE.Vector2(
             (event.clientX / window.innerWidth) * 2 - 1,
             -(event.clientY / window.innerHeight) * 2 + 1
         );
@@ -104,10 +88,9 @@ function onMouseDown(event) {
     }
 }
 
-
 function onMouseMove(event) {
     if (isDragging && currentMode === MODE_CONTROLLING_BALL) {
-        let mouse = new THREE.Vector2(
+        const mouse = new THREE.Vector2(
             (event.clientX / window.innerWidth) * 2 - 1,
             -(event.clientY / window.innerHeight) * 2 + 1
         );
@@ -124,7 +107,7 @@ function onMouseMove(event) {
         if (!intersected) return;
 
         const ballWorldPos = ball.getWorldPosition(new THREE.Vector3());
-        let pullVector = new THREE.Vector3().subVectors(mousePos, ballWorldPos);
+        const pullVector = new THREE.Vector3().subVectors(mousePos, ballWorldPos);
 
         if (pullVector.length() > maxPullLength) {
             pullVector.setLength(maxPullLength);
@@ -132,14 +115,13 @@ function onMouseMove(event) {
 
         const points = [
             new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, 0, 0).sub(pullVector)
+            new THREE.Vector3(0, 0, 0).sub(pullVector),
         ];
 
         guideLine.geometry.setFromPoints(points);
         guideLine.visible = pullVector.length() > 0.01;
     }
 }
-
 
 function onMouseUp(event) {
     if (isDragging && currentMode === MODE_CONTROLLING_BALL) {
@@ -155,7 +137,7 @@ function onMouseUp(event) {
         raycaster.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), mousePos);
 
         const ballWorldPos = ball.getWorldPosition(new THREE.Vector3());
-        let pullVector = new THREE.Vector3().subVectors(mousePos, ballWorldPos);
+        const pullVector = new THREE.Vector3().subVectors(mousePos, ballWorldPos);
 
         if (pullVector.length() > maxPullLength) {
             pullVector.setLength(maxPullLength);
@@ -172,7 +154,7 @@ function onMouseUp(event) {
 }
 
 function onMouseClick(event) {
-    let mouse = new THREE.Vector2(
+    const mouse = new THREE.Vector2(
         (event.clientX / window.innerWidth) * 2 - 1,
         -(event.clientY / window.innerHeight) * 2 + 1
     );
@@ -186,7 +168,6 @@ function onMouseClick(event) {
             const intersectPoint = intersects[0].point;
 
             const terrainHeight = getTerrainHeightAt(intersectPoint.x);
-
             const placementPosition = new THREE.Vector3(intersectPoint.x, terrainHeight, intersectPoint.z);
 
             if (currentMode === MODE_ADDING_BUMPER) {

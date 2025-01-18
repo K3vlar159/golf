@@ -38,6 +38,40 @@
 			left: 0;
 			z-index: 1;
 		}
+
+		#scoreDisplay {
+			position: absolute;
+			top: 10px; /* Adjust as needed to move it slightly down from the top */
+			left: 50%;
+			transform: translateX(-50%);
+			font-size: 18px; /* Adjust font size as needed */
+			color: white; /* Ensure visibility against the background */
+			z-index: 3; /* Ensure it appears above other elements */
+			background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a background for better visibility */
+			padding: 5px 10px; /* Optional: Add some padding around the text */
+			border-radius: 5px; /* Optional: Add rounded corners */
+		}
+
+		#modeControls {
+			position: absolute;
+			bottom: 50px;
+			left: 15%;
+			transform: translateX(-50%);
+			z-index: 3; /* Ensure buttons are above canvas */
+		}
+
+		#modeControls button {
+			margin: 5px;
+			padding: 10px 20px;
+			font-size: 14px;
+			cursor: pointer;
+		}
+
+		.active {
+			background-color: #4CAF50; /* Highlight active button */
+			color: white;
+		}
+
 	</style>
 </head>
 
@@ -55,6 +89,13 @@
 			step="0.001"
 			value="0.02"
 	/>
+
+	<div id="scoreDisplay">Score: 0</div>
+
+	<div id="modeControls">
+		<button id="modeAddBumper">Add Bumper</button>
+		<button id="modeAddBooster">Add Booster</button>
+	</div>
 
 </div>
 

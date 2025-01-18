@@ -1,6 +1,5 @@
 let camera, scene, renderer, ball, terrain, guideLine, hole, water, sand;
 let score = 0; // Initialize the score
-let scoreCanvas, scoreContext, scoreTexture, scorePlane;
 let multi = 1;
 const ballRadius = 0.25;
 const numberOfWaters = 5;
@@ -99,7 +98,6 @@ function init() {
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('click', onMouseClick);
 
-    createScoreDisplay();
 }
 
 function render() {
@@ -158,7 +156,7 @@ function addObjects(){
 
     //booster = createBooster(terrainPoints[20]);
     //bumper = createBumper(terrainPoints[13]);
-   // portal = createPortal(terrainPoints[23], terrainPoints[10]);
+    // portal = createPortal(terrainPoints[23], terrainPoints[10]);
 
 }
 
@@ -179,6 +177,8 @@ function holeCollision() {
         // Increment score and update the canvas texture
         score = score + (100 * multi);
         drawScore();
+
+        resetGame();
     }
 }
 
@@ -364,45 +364,18 @@ function adjustGravity(event){
     setGravity(-newGravity);
     console.log(`Gravity set to: ${-newGravity}`);
 }
-function createScoreDisplay() {
-    // Create a canvas for the score
-    scoreCanvas = document.createElement('canvas');
-    scoreCanvas.width = 512; // Adjust resolution
-    scoreCanvas.height = 256;
-    scoreContext = scoreCanvas.getContext('2d');
-
-    // Create a texture from the canvas
-    scoreTexture = new THREE.CanvasTexture(scoreCanvas);
-
-    // Create a plane geometry to display the texture
-    const planeGeometry = new THREE.PlaneGeometry(5, 2); // Adjust size
-    const planeMaterial = new THREE.MeshBasicMaterial({ map: scoreTexture, transparent: true });
-    scorePlane = new THREE.Mesh(planeGeometry, planeMaterial);
-
-    // Position and add to the scene
-    scorePlane.position.set(startCoords.x, startCoords.y, 0); // Adjust position to fit your scene
-    scene.add(scorePlane);
-
-    // Draw the initial score AFTER initializing the texture
-    drawScore();
-}
 
 
 function drawScore() {
-    // Clear the canvas
-    scoreContext.clearRect(0, 0, scoreCanvas.width, scoreCanvas.height);
-
-    // Draw background
-    scoreContext.fillStyle = '#000000'; // Black background
-    scoreContext.fillRect(0, 0, scoreCanvas.width, scoreCanvas.height);
-
-    // Draw text
-    scoreContext.fillStyle = '#FFFFFF'; // White text
-    scoreContext.font = '48px Arial'; // Font style and size
-    scoreContext.fillText(`Score: ${score}`, 50, 100); // Position the text
-    scoreContext.fillText(`Multiplier: ${multi}`, 50,200);
-
-    // Update texture
-    scoreTexture.needsUpdate = true;
+    document.getElementById('scoreDisplay').innerText = `Score: ${score}`;
 }
 
+function resetGame() {
+    while(scene.children.length > 0){
+        scene.remove(scene.children[0]);
+    }
+
+    addObjects();
+    ball.position.set(startCoords.x, startCoords.y, startCoords.z);
+    velocity.set(0,0);
+}
