@@ -154,6 +154,11 @@ function onMouseUp(event) {
 }
 
 function onMouseClick(event) {
+    // Check if the click is on a button or any UI element
+    if (event.target.tagName === 'BUTTON' || event.target.closest('.ui')) {
+        return; // Do nothing if the click is on a button or UI
+    }
+
     const mouse = new THREE.Vector2(
         (event.clientX / window.innerWidth) * 2 - 1,
         -(event.clientY / window.innerHeight) * 2 + 1
@@ -178,3 +183,4 @@ function onMouseClick(event) {
         }
     }
 }
+

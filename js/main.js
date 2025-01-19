@@ -2,7 +2,7 @@ let camera, scene, renderer, ball, terrain, guideLine, hole, water, sand;
 let score = 0; // Initialize the score
 let multi = 1;
 const ballRadius = 0.25;
-const numberOfWaters = 5;
+const numberOfWaters = 10;
 const numberOfSands = 5;
 const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
@@ -45,11 +45,11 @@ const softColorShaderMaterial = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
 });
 
-import { createTerrainMesh, terrainPoints, terrainWidth,minTerrainHeight } from './terrain.js';
+import { createTerrainMesh,randomizeTerrain, terrainPoints, terrainWidth,minTerrainHeight } from './terrain.js';
 import { applyPhysics, velocity, setGravity} from './physics.js';
 import { generateWater} from './water.js';
 import { uniforms } from './water.js';
-import { generateSand,sandPoints} from './sand.js';
+import {generateSand, resetSandPoints, sandPoints} from './sand.js';
 import { onMouseWheel, onMouseDown, onMouseMove, onMouseUp, onMouseClick, currentZoom} from './controls.js';
 
 export { terrain, ball, ballRadius, camera, guideLine};
@@ -84,7 +84,7 @@ function init() {
     const slider = document.getElementById("gravitySlider");
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87ceeb);
+    scene.background = new THREE.Color('rgb(135,206,235)');
 
     addObjects();
 
@@ -97,6 +97,12 @@ function init() {
     renderer.domElement.addEventListener('wheel', onMouseWheel);
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('click', onMouseClick);
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'q' || event.key === 'Q') {
+            resetGame();
+        }
+    });
+
 
 }
 
@@ -359,10 +365,33 @@ function followBall() {
     camera.lookAt(camera.position.x, camera.position.y, 0);
 }
 
-function adjustGravity(event){
+function adjustGravity(event) {
     const newGravity = parseFloat(event.target.value);
     setGravity(-newGravity);
     console.log(`Gravity set to: ${-newGravity}`);
+
+    // Interpolate the terrain color based on gravity
+    const maxGravity = parseFloat(event.target.max);
+    const minGravity = parseFloat(event.target.min);
+
+    // Normalize gravity to a 0-1 range
+    const normalizedGravity = (newGravity - minGravity) / (maxGravity - minGravity);
+
+    // Interpolate between green (max gravity) and gray (min gravity)
+    const terrainInterpolatedColor = colorChange('rgb(94,94,94)','rgb(34,104,18)', normalizedGravity);
+    const bgInterpolatedColor = colorChange('rgb(43,48,92)','rgb(135,206,235)', normalizedGravity);
+
+    // Update the terrain material color
+    terrain.material.uniforms.baseColor.value.set(terrainInterpolatedColor);
+    scene.background.set(bgInterpolatedColor);
+    hole.material.color.set(bgInterpolatedColor);
+}
+
+
+function colorChange(color1, color2, t) {
+    const c1 = new THREE.Color(color1);
+    const c2 = new THREE.Color(color2);
+    return c1.lerp(c2, t);
 }
 
 
@@ -374,8 +403,12 @@ function resetGame() {
     while(scene.children.length > 0){
         scene.remove(scene.children[0]);
     }
-
+    randomizeTerrain();
+    resetSandPoints();
     addObjects();
+    const slider = document.getElementById("gravitySlider");
+    slider.value = 0.02;  // Assuming the default slider value is 5.0
+    setGravity(-0.02);
     ball.position.set(startCoords.x, startCoords.y, startCoords.z);
     velocity.set(0,0);
 }
