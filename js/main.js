@@ -6,7 +6,7 @@ const numberOfWaters = 10;
 const numberOfSands = 5;
 const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
-const WATER_RESET = true;
+const WATER_RESET = false;
 // object arrays
 const bumpers = [];
 const boosters = [];
@@ -104,6 +104,9 @@ function init() {
         if (event.key === 'r' || event.key === 'R') {
             resetBall();
         }
+        if (event.key === 'w' || event.key === 'W') {
+            ball.position.set(hole.position.x+5, hole.position.y+5, hole.position.z);
+        }
     });
 
 
@@ -156,6 +159,21 @@ function addObjects(){
     hole = new THREE.Mesh(holeGeometry, holeMaterial);
     hole.position.set(terrainPoints[terrainPoints.length-10].x, terrainPoints[terrainPoints.length-10].y, 0);
     scene.add(hole);
+
+// flag pole
+    const flagGeometry = new THREE.PlaneGeometry(0.08, 2);  // Flag width = 1, height = 2
+    const flagMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });  // Red color for the flag
+    const flag = new THREE.Mesh(flagGeometry, flagMaterial);
+    flag.position.set(hole.position.x, hole.position.y+0.5, hole.position.z); // Position it above the pole
+
+// Create the triangular tip of the flag (simple cone)
+    const flagTipGeometry = new THREE.ConeGeometry(0.2, 0.5, 4);  // Small cone for the flag's tip
+    const flagTip = new THREE.Mesh(flagTipGeometry, flagMaterial);
+    flagTip.position.set(flag.position.x-0.25, flag.position.y+0.75, flag.position.z);  // Position it at the top of the flag
+    flagTip.rotation.z = Math.PI/2;
+// Add the pole, flag, and flag tip to the scene
+    scene.add(flag);
+    scene.add(flagTip);
 
     // Generate water on the terrain
     water = createWaterShapes(terrainPoints, numberOfWaters);
