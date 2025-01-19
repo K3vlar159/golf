@@ -101,6 +101,9 @@ function init() {
         if (event.key === 'q' || event.key === 'Q') {
             resetGame();
         }
+        if (event.key === 'r' || event.key === 'R') {
+            resetBall();
+        }
     });
 
 
@@ -199,9 +202,7 @@ function checkCollisionsWithWater() {
         // Check if the ball's y-position is below the water's y-position
         if (waterBoundingBox.containsPoint(ballPosition)) {
             if(WATER_RESET){
-                ball.position.set(startCoords.x, startCoords.y, startCoords.z);
-                velocity.x = 0;
-                velocity.y = 0;
+                resetBall();
             }
             console.log("SPLASH!");
         }
@@ -399,6 +400,11 @@ function drawScore() {
     document.getElementById('scoreDisplay').innerText = `Score: ${score}`;
 }
 
+function resetBall(){
+    ball.position.set(startCoords.x, startCoords.y, startCoords.z);
+    velocity.set(0,0);
+}
+
 function resetGame() {
     while(scene.children.length > 0){
         scene.remove(scene.children[0]);
@@ -409,6 +415,5 @@ function resetGame() {
     const slider = document.getElementById("gravitySlider");
     slider.value = 0.02;  // Assuming the default slider value is 5.0
     setGravity(-0.02);
-    ball.position.set(startCoords.x, startCoords.y, startCoords.z);
-    velocity.set(0,0);
+    resetBall();
 }
