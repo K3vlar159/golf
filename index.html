@@ -4,81 +4,40 @@
 	<title>PC Grafika ThreeJS</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-	<style>
-		/* Style for slider positioning */
-		#gravitySlider {
-			position: absolute;
-			bottom: 10px;
-			left: 50%;
-			transform: translateX(-50%);
-			width: 300px;
-		}
-		label {
-			position: absolute;
-			bottom: 40px;
-			left: 50%;
-			transform: translateX(-50%);
-			font-size: 14px;
-			color: white; /* Ensure visibility on dark background */
-			z-index: 2; /* Above canvas */
-		}
-		#gravitySlider {
-			pointer-events: auto; /* Ensure the slider receives its own events */
-			position: absolute;
-			bottom: 20px;
-			left: 50%;
-			transform: translateX(-50%);
-			z-index: 2; /* Slider on top of the canvas */
-		}
-
-		canvas {
-			pointer-events: all; /* Ensure the canvas continues to receive events */
-			position: absolute;
-			top: 0;
-			left: 0;
-			z-index: 1;
-		}
-
-		#scoreDisplay {
-			position: absolute;
-			top: 10px; /* Adjust as needed to move it slightly down from the top */
-			left: 50%;
-			transform: translateX(-50%);
-			font-size: 18px; /* Adjust font size as needed */
-			color: white; /* Ensure visibility against the background */
-			z-index: 3; /* Ensure it appears above other elements */
-			background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a background for better visibility */
-			padding: 5px 10px; /* Optional: Add some padding around the text */
-			border-radius: 5px; /* Optional: Add rounded corners */
-		}
-
-		#modeControls {
-			position: absolute;
-			bottom: 50px;
-			left: 15%;
-			transform: translateX(-50%);
-			z-index: 3; /* Ensure buttons are above canvas */
-		}
-
-		#modeControls button {
-			margin: 5px;
-			padding: 10px 20px;
-			font-size: 14px;
-			cursor: pointer;
-		}
-
-		.active {
-			background-color: #4CAF50; /* Highlight active button */
-			color: white;
-		}
-
-	</style>
+	<link rel="stylesheet" href="styles.css">
 </head>
 
 <script src="js/threejs/build/three.js"></script>
 <script src="js/threejs/js/controls/OrbitControls.js"></script>
 
 <body>
+<div id="start-menu">
+	<h1>2D Golf</h1>
+	<h2>Počítačová grafika</h2>
+	<h3>Dávid Jerguš, Filip Krišák</h3>
+	<button id="start-button">Start Game</button>
+	<button id="controls-button">Controls</button>
+</div>
+
+<div id="controls-menu" style="display: none;">
+	<h1>Controls</h1>
+	<p>
+		<strong>Game Controls:</strong><br>
+		- Drag the ball to set the direction and power. Release to fire.<br>
+		- Use the slider to adjust gravity.<br>
+		- Use the buttons to add bumpers or boosters.<br>
+		- Press R to reset ball.<br>
+		- Press Q for a new map.<br>
+		- Press Esc to show menu<br><br><br>
+
+		*for testing purposes* - pres W to teleport ball to hole
+	</p>
+	<button id="back-button">Back</button>
+</div>
+<div id="win-menu" style="display: none;">
+	<h1>Level Cleared !</h1>
+	<button id="next-button">Next</button>
+</div>
 <div id="canvas1">
 	<label for="gravitySlider">GRAVITY</label>
 	<input
@@ -91,6 +50,7 @@
 	/>
 
 	<div id="scoreDisplay">Score: 0</div>
+	<div id="hitDisplay">Hits: 0</div>
 
 	<div id="modeControls">
 		<button id="modeAddBumper">Add Bumper</button>

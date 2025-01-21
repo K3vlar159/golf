@@ -1,15 +1,47 @@
 let camera, scene, renderer, ball, terrain, guideLine, hole, water, sand;
 let score = 0; // Initialize the score
+let hits = 0;
 let multi = 1;
+let birdie = false;
 const ballRadius = 0.25;
 const numberOfWaters = 10;
 const numberOfSands = 5;
 const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
-const WATER_RESET = false;
+const WATER_RESET = true;
 // object arrays
 const bumpers = [];
 const boosters = [];
+
+const startMenu = document.getElementById('start-menu');
+const startButton = document.getElementById('start-button');
+const controlsButton = document.getElementById('controls-button');
+const backButton = document.getElementById('back-button');
+const controlsMenu = document.getElementById('controls-menu');
+const winMenu = document.getElementById('win-menu');
+const nextButton = document.getElementById('next-button');
+
+startButton.addEventListener('click', () => {
+    startMenu.style.display = 'none'; // Hide the start menu
+    //init(); // Start the game
+});
+
+// Show the controls menu
+controlsButton.addEventListener('click', () => {
+    startMenu.style.display = 'none'; // Hide start menu
+    controlsMenu.style.display = 'flex'; // Show controls menu
+});
+
+// Go back to the start menu
+backButton.addEventListener('click', () => {
+    controlsMenu.style.display = 'none'; // Hide controls menu
+    startMenu.style.display = 'flex'; // Show start menu
+});
+
+nextButton.addEventListener('click', () => {
+    winMenu.style.display = 'none'; // Hide the win menu
+    resetGame(); // Reset the game for the next level
+});
 
 const softColorShaderMaterial = new THREE.ShaderMaterial({
     vertexShader: `
@@ -52,7 +84,7 @@ import { uniforms } from './water.js';
 import {generateSand, resetSandPoints, sandPoints} from './sand.js';
 import { onMouseWheel, onMouseDown, onMouseMove, onMouseUp, onMouseClick, currentZoom} from './controls.js';
 
-export { terrain, ball, ballRadius, camera, guideLine};
+export { terrain, ball, ballRadius, camera, guideLine, addHit, drawHits};
 
 init();
 render();
@@ -107,6 +139,10 @@ function init() {
         if (event.key === 'w' || event.key === 'W') {
             ball.position.set(hole.position.x+5, hole.position.y+5, hole.position.z);
         }
+        if (event.key === 'Escape') {
+            startMenu.style.display = 'flex';
+        }
+
     });
 
 
@@ -195,17 +231,28 @@ function holeCollision() {
     if (distance <= holeRadius) {
         // Move the ball inside the hole (you can adjust Y position if needed)
         ball.position.set(hole.position.x, hole.position.y-holeRadius/2, 0.001);
-
+        velocity.x = 0;
+        velocity.y = 0;
         //scene.remove(ball);
         //ball.geometry.dispose();
         //ball.material.dispose();
 
         console.log("Birdie!");
-        // Increment score and update the canvas texture
-        score = score + (100 * multi);
-        drawScore();
+        if(!birdie){
+            if(hits > 1000){
+                score +=1;
+            }
+            else{
+                score = score + Math.floor(1000 / hits);
+            }
+            multi +=1;
+            birdie = true;
+        }
 
-        resetGame();
+        drawScore();
+        // Show the win menu
+        winMenu.style.display = 'flex';
+        //resetGame();
     }
 }
 
@@ -418,9 +465,17 @@ function drawScore() {
     document.getElementById('scoreDisplay').innerText = `Score: ${score}`;
 }
 
+function drawHits() {
+    document.getElementById('hitDisplay').innerText = `Hits: ${hits}`;
+}
+
 function resetBall(){
     ball.position.set(startCoords.x, startCoords.y, startCoords.z);
     velocity.set(0,0);
+}
+
+function addHit(){
+    hits += 1;
 }
 
 function resetGame() {
@@ -429,9 +484,13 @@ function resetGame() {
     }
     randomizeTerrain();
     resetSandPoints();
-    addObjects();
     const slider = document.getElementById("gravitySlider");
     slider.value = 0.02;  // Assuming the default slider value is 5.0
     setGravity(-0.02);
+    scene.background.set('rgb(135,206,235)');
+    birdie = false;
+    hits= 0;
+    drawHits();
+    addObjects();
     resetBall();
 }

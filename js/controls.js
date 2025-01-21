@@ -16,7 +16,7 @@ const MODE_ADDING_BOOSTER = 'addingBooster';
 let currentMode = MODE_CONTROLLING_BALL; // Start with ball control mode
 
 export { onMouseWheel, onMouseDown, onMouseMove, onMouseUp, isDragging, onMouseClick, currentZoom };
-import { camera, guideLine, ball, createBumper, createBooster, terrain } from './main.js';
+import {camera, guideLine, ball, createBumper, createBooster, terrain, addHit, drawHits} from './main.js';
 import { velocity, getTerrainHeightAt } from './physics.js';
 
 // Mode control buttons
@@ -147,7 +147,8 @@ function onMouseUp(event) {
             -pullVector.x * launchStrength,
             -pullVector.y * launchStrength
         );
-
+        addHit();
+        drawHits();
         guideLine.visible = false;
         isDragging = false;
     }
