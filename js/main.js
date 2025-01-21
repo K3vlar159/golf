@@ -10,8 +10,8 @@ const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
 const WATER_RESET = true;
 // object arrays
-const bumpers = [];
-const boosters = [];
+let bumpers = [];
+let boosters = [];
 
 const startMenu = document.getElementById('start-menu');
 const startButton = document.getElementById('start-button');
@@ -303,8 +303,8 @@ function checkBoosterCollision(ball, velocity) {
         const withinY = ballPos.y >= boosterPos.y - 0.2 && ballPos.y <= boosterPos.y + 0.2;
 
         if (withinX && withinY) {
-            velocity.x += 0.3;
-            velocity.y += 0.03;
+            velocity.x += 0.5;
+            velocity.y += 0.1;
             console.log("Speed boost!");
             multi += 1;
             drawScore();
@@ -341,7 +341,7 @@ function checkBumperCollision(ball, velocity) {
         const withinY = ballPos.y >= bumperPos.y - 1 && ballPos.y <= bumperPos.y + 0.8;
 
         if (withinX && withinY) {
-            velocity.x = velocity.x * 2 +0.1;
+            velocity.x = velocity.x + 0.1;
             velocity.y = 0.8;
             console.log("Bounce!");
             break;
@@ -490,6 +490,8 @@ function resetGame() {
     scene.background.set('rgb(135,206,235)');
     birdie = false;
     hits= 0;
+    bumpers = [];
+    boosters = [];
     drawHits();
     addObjects();
     resetBall();

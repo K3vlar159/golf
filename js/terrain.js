@@ -39,7 +39,7 @@ function generateTerrain(width, maxH, minH, detail, roughness) {
     return points;
 }
 
-function smoothTerrain(points, smoothingPasses = 1) {
+function smoothTerrain(points, smoothingPasses) {
     for (let pass = 0; pass < smoothingPasses; pass++) {
         const smoothedPoints = [points[0]]; // Keep first point
 
@@ -73,7 +73,7 @@ function createTerrainMesh() {
     );
 
     // Apply smoothing (adjust passes as needed)
-    terrainVertices = smoothTerrain(terrainVertices, 2);
+    terrainVertices = smoothTerrain(terrainVertices,2 );
 
     // Create the shape
     terrainVertices.forEach(point => {
