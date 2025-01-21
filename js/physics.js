@@ -1,8 +1,5 @@
 let velocity = new THREE.Vector2();
 let gravity = -0.02; //default -0.02
-const friction = 0.98; //default 0.98
-const groundedDamping = 0.8;
-const rollingFriction = 0.98;
 const velocityThreshold = 0.0005;
 const groundedThreshold = 0.01;
 const slopeFriction = 0.05; // Universal friction coefficient for slopes
@@ -88,7 +85,7 @@ function handleGroundedState(slopeAngle, inValley) {
     }
 
     // Damp vertical velocity when grounded
-    velocity.y *= groundedDamping;
+    //velocity.y *= groundedDamping;
 
     // Stop if barely moving
     if (Math.abs(velocity.x) < velocityThreshold && Math.abs(velocity.y) < velocityThreshold) {

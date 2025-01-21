@@ -1,0 +1,146 @@
+/* Style for slider positioning */
+#gravitySlider {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+}
+label {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+    color: white; /* Ensure visibility on dark background */
+    z-index: 2; /* Above canvas */
+}
+#gravitySlider {
+    pointer-events: auto; /* Ensure the slider receives its own events */
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2; /* Slider on top of the canvas */
+}
+
+canvas {
+    pointer-events: all; /* Ensure the canvas continues to receive events */
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+#scoreDisplay {
+    position: absolute;
+    top: 10px; /* Adjust as needed to move it slightly down from the top */
+    left: 60px;
+    transform: translateX(-50%);
+    font-size: 18px; /* Adjust font size as needed */
+    color: white; /* Ensure visibility against the background */
+    z-index: 3; /* Ensure it appears above other elements */
+    background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a background for better visibility */
+    padding: 5px 10px; /* Optional: Add some padding around the text */
+    border-radius: 5px; /* Optional: Add rounded corners */
+}
+
+#hitDisplay {
+    position: absolute;
+    top: 10px; /* Adjust as needed to move it slightly down from the top */
+    right: 0px;
+    transform: translateX(-50%);
+    font-size: 18px; /* Adjust font size as needed */
+    color: white; /* Ensure visibility against the background */
+    z-index: 3; /* Ensure it appears above other elements */
+    background-color: rgba(0, 0, 0, 0.5); /* Optional: Add a background for better visibility */
+    padding: 5px 10px; /* Optional: Add some padding around the text */
+    border-radius: 5px; /* Optional: Add rounded corners */
+}
+
+#modeControls {
+    position: absolute;
+    bottom: 50px;
+    left: 15%;
+    transform: translateX(-50%);
+    z-index: 3; /* Ensure buttons are above canvas */
+}
+
+#modeControls button {
+    margin: 5px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#start-menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 10;
+}
+#start-menu button {
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#controls-menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 10;
+}
+#controls-menu button {
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#win-menu {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 10;
+}
+#win-menu button {
+    padding: 10px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.active {
+    background-color: #4CAF50; /* Highlight active button */
+    color: white;
+}
+
+

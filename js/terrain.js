@@ -1,9 +1,9 @@
 // Terrain settings
 const terrainWidth = 200;
-const maxTerrainHeight = 20;
-const minTerrainHeight = -15;
-const detailLevel = 7 // Number of iterations (use smaller numbers for less detail)
-const roughness = 0.3; // Controls how jagged the terrain is/hill height (0.1 to 1.0)
+let maxTerrainHeight = 20;
+let minTerrainHeight = -15;
+let detailLevel = 7 // Number of iterations (use smaller numbers for less detail)
+let roughness = 0.3; // Controls how jagged the terrain is/hill height (0.1 to 1.0)
 let terrainPoints;
 
 function generateTerrain(width, maxH, minH, detail, roughness) {
@@ -39,7 +39,7 @@ function generateTerrain(width, maxH, minH, detail, roughness) {
     return points;
 }
 
-function smoothTerrain(points, smoothingPasses = 1) {
+function smoothTerrain(points, smoothingPasses) {
     for (let pass = 0; pass < smoothingPasses; pass++) {
         const smoothedPoints = [points[0]]; // Keep first point
 
@@ -73,7 +73,7 @@ function createTerrainMesh() {
     );
 
     // Apply smoothing (adjust passes as needed)
-    terrainVertices = smoothTerrain(terrainVertices, 2);
+    terrainVertices = smoothTerrain(terrainVertices,2 );
 
     // Create the shape
     terrainVertices.forEach(point => {
@@ -116,7 +116,7 @@ function createTerrainMesh() {
             }
             `,
         uniforms: {
-            baseColor: { value: new THREE.Color(0x165b13) },
+            baseColor: { value: new THREE.Color('rgb(34,104,18)') },
             lightDirection: { value: new THREE.Vector3(0.11, -10, 0) },
             lightIntensity: { value: 0.3 }
         },
@@ -126,5 +126,24 @@ function createTerrainMesh() {
     return new THREE.Mesh(geometry, shaderMaterial);
 }
 
-export { createTerrainMesh, terrainPoints, terrainWidth, minTerrainHeight };
+function randomizeTerrain() {
+    maxTerrainHeight = getRandomInRange(10, 30);
+    minTerrainHeight = getRandomInRange(-15, -10);
+    detailLevel = getRandomInRange(6, 8);
+    roughness = getRandomInRange(0.2, 0.7);
+
+    console.log(`maxTerrainHeight: ${maxTerrainHeight}`);
+    console.log(`minTerrainHeight: ${minTerrainHeight}`);
+    console.log(`detailLevel: ${detailLevel}`);
+    console.log(`roughness: ${roughness}`);
+}
+
+function getRandomInRange(min, max) {
+    if (Number.isInteger(min) && Number.isInteger(max)) {
+        return Math.floor(Math.random() * (max - min + 1)) + min; // Integer randomization
+    }
+    return Math.random() * (max - min) + min; // Floating-point randomization
+}
+
+export { createTerrainMesh, randomizeTerrain, terrainPoints, terrainWidth, minTerrainHeight };
 

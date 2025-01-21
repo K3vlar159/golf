@@ -1,9 +1,13 @@
 // Assumes `terrainPoints` is an array of { x, y } objects representing the 2D terrain.
 // Assumes a `scene` variable exists for Three.js.
-export { generateSand, sandPoints};
+export { generateSand, sandPoints, resetSandPoints};
 const SAND_MIN = 5;
 const SAND_MAX = 10;
 let sandPoints= [];
+
+function resetSandPoints(){
+    sandPoints=[];
+}
 
 function generateSand(terrainPoints) {
     if (terrainPoints.length < 2) {

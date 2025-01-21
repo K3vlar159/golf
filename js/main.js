@@ -1,16 +1,47 @@
 let camera, scene, renderer, ball, terrain, guideLine, hole, water, sand;
 let score = 0; // Initialize the score
-let scoreCanvas, scoreContext, scoreTexture, scorePlane;
+let hits = 0;
 let multi = 1;
+let birdie = false;
 const ballRadius = 0.25;
-const numberOfWaters = 5;
+const numberOfWaters = 10;
 const numberOfSands = 5;
 const cameraSpeed = 0.05;
 const startCoords = { x: -terrainWidth/2 + 5, y: 10, z: 0 };
 const WATER_RESET = true;
 // object arrays
-const bumpers = [];
-const boosters = [];
+let bumpers = [];
+let boosters = [];
+
+const startMenu = document.getElementById('start-menu');
+const startButton = document.getElementById('start-button');
+const controlsButton = document.getElementById('controls-button');
+const backButton = document.getElementById('back-button');
+const controlsMenu = document.getElementById('controls-menu');
+const winMenu = document.getElementById('win-menu');
+const nextButton = document.getElementById('next-button');
+
+startButton.addEventListener('click', () => {
+    startMenu.style.display = 'none'; // Hide the start menu
+    //init(); // Start the game
+});
+
+// Show the controls menu
+controlsButton.addEventListener('click', () => {
+    startMenu.style.display = 'none'; // Hide start menu
+    controlsMenu.style.display = 'flex'; // Show controls menu
+});
+
+// Go back to the start menu
+backButton.addEventListener('click', () => {
+    controlsMenu.style.display = 'none'; // Hide controls menu
+    startMenu.style.display = 'flex'; // Show start menu
+});
+
+nextButton.addEventListener('click', () => {
+    winMenu.style.display = 'none'; // Hide the win menu
+    resetGame(); // Reset the game for the next level
+});
 
 const softColorShaderMaterial = new THREE.ShaderMaterial({
     vertexShader: `
@@ -46,14 +77,14 @@ const softColorShaderMaterial = new THREE.ShaderMaterial({
     side: THREE.DoubleSide,
 });
 
-import { createTerrainMesh, terrainPoints, terrainWidth,minTerrainHeight } from './terrain.js';
+import { createTerrainMesh,randomizeTerrain, terrainPoints, terrainWidth,minTerrainHeight } from './terrain.js';
 import { applyPhysics, velocity, setGravity} from './physics.js';
 import { generateWater} from './water.js';
 import { uniforms } from './water.js';
-import { generateSand,sandPoints} from './sand.js';
+import {generateSand, resetSandPoints, sandPoints} from './sand.js';
 import { onMouseWheel, onMouseDown, onMouseMove, onMouseUp, onMouseClick, currentZoom} from './controls.js';
 
-export { terrain, ball, ballRadius, camera, guideLine};
+export { terrain, ball, ballRadius, camera, guideLine, addHit, drawHits};
 
 init();
 render();
@@ -85,7 +116,7 @@ function init() {
     const slider = document.getElementById("gravitySlider");
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87ceeb);
+    scene.background = new THREE.Color('rgb(135,206,235)');
 
     addObjects();
 
@@ -98,8 +129,23 @@ function init() {
     renderer.domElement.addEventListener('wheel', onMouseWheel);
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('click', onMouseClick);
+    window.addEventListener('keydown', (event) => {
+        if (event.key === 'q' || event.key === 'Q') {
+            resetGame();
+        }
+        if (event.key === 'r' || event.key === 'R') {
+            resetBall();
+        }
+        if (event.key === 'w' || event.key === 'W') {
+            ball.position.set(hole.position.x+5, hole.position.y+5, hole.position.z);
+        }
+        if (event.key === 'Escape') {
+            startMenu.style.display = 'flex';
+        }
 
-    createScoreDisplay();
+    });
+
+
 }
 
 function render() {
@@ -150,6 +196,21 @@ function addObjects(){
     hole.position.set(terrainPoints[terrainPoints.length-10].x, terrainPoints[terrainPoints.length-10].y, 0);
     scene.add(hole);
 
+// flag pole
+    const flagGeometry = new THREE.PlaneGeometry(0.08, 2);  // Flag width = 1, height = 2
+    const flagMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });  // Red color for the flag
+    const flag = new THREE.Mesh(flagGeometry, flagMaterial);
+    flag.position.set(hole.position.x, hole.position.y+0.5, hole.position.z); // Position it above the pole
+
+// Create the triangular tip of the flag (simple cone)
+    const flagTipGeometry = new THREE.ConeGeometry(0.2, 0.5, 4);  // Small cone for the flag's tip
+    const flagTip = new THREE.Mesh(flagTipGeometry, flagMaterial);
+    flagTip.position.set(flag.position.x-0.25, flag.position.y+0.75, flag.position.z);  // Position it at the top of the flag
+    flagTip.rotation.z = Math.PI/2;
+// Add the pole, flag, and flag tip to the scene
+    scene.add(flag);
+    scene.add(flagTip);
+
     // Generate water on the terrain
     water = createWaterShapes(terrainPoints, numberOfWaters);
 
@@ -158,7 +219,7 @@ function addObjects(){
 
     //booster = createBooster(terrainPoints[20]);
     //bumper = createBumper(terrainPoints[13]);
-   // portal = createPortal(terrainPoints[23], terrainPoints[10]);
+    // portal = createPortal(terrainPoints[23], terrainPoints[10]);
 
 }
 
@@ -170,15 +231,28 @@ function holeCollision() {
     if (distance <= holeRadius) {
         // Move the ball inside the hole (you can adjust Y position if needed)
         ball.position.set(hole.position.x, hole.position.y-holeRadius/2, 0.001);
-
+        velocity.x = 0;
+        velocity.y = 0;
         //scene.remove(ball);
         //ball.geometry.dispose();
         //ball.material.dispose();
 
         console.log("Birdie!");
-        // Increment score and update the canvas texture
-        score = score + (100 * multi);
+        if(!birdie){
+            if(hits > 1000){
+                score +=1;
+            }
+            else{
+                score = score + Math.floor(1000 / hits);
+            }
+            multi +=1;
+            birdie = true;
+        }
+
         drawScore();
+        // Show the win menu
+        winMenu.style.display = 'flex';
+        //resetGame();
     }
 }
 
@@ -193,9 +267,7 @@ function checkCollisionsWithWater() {
         // Check if the ball's y-position is below the water's y-position
         if (waterBoundingBox.containsPoint(ballPosition)) {
             if(WATER_RESET){
-                ball.position.set(startCoords.x, startCoords.y, startCoords.z);
-                velocity.x = 0;
-                velocity.y = 0;
+                resetBall();
             }
             console.log("SPLASH!");
         }
@@ -231,8 +303,8 @@ function checkBoosterCollision(ball, velocity) {
         const withinY = ballPos.y >= boosterPos.y - 0.2 && ballPos.y <= boosterPos.y + 0.2;
 
         if (withinX && withinY) {
-            velocity.x += 0.3;
-            velocity.y += 0.03;
+            velocity.x += 0.5;
+            velocity.y += 0.1;
             console.log("Speed boost!");
             multi += 1;
             drawScore();
@@ -269,7 +341,7 @@ function checkBumperCollision(ball, velocity) {
         const withinY = ballPos.y >= bumperPos.y - 1 && ballPos.y <= bumperPos.y + 0.8;
 
         if (withinX && withinY) {
-            velocity.x = velocity.x * 2 +0.1;
+            velocity.x = velocity.x + 0.1;
             velocity.y = 0.8;
             console.log("Bounce!");
             break;
@@ -359,50 +431,68 @@ function followBall() {
     camera.lookAt(camera.position.x, camera.position.y, 0);
 }
 
-function adjustGravity(event){
+function adjustGravity(event) {
     const newGravity = parseFloat(event.target.value);
     setGravity(-newGravity);
     console.log(`Gravity set to: ${-newGravity}`);
+
+    // Interpolate the terrain color based on gravity
+    const maxGravity = parseFloat(event.target.max);
+    const minGravity = parseFloat(event.target.min);
+
+    // Normalize gravity to a 0-1 range
+    const normalizedGravity = (newGravity - minGravity) / (maxGravity - minGravity);
+
+    // Interpolate between green (max gravity) and gray (min gravity)
+    const terrainInterpolatedColor = colorChange('rgb(94,94,94)','rgb(34,104,18)', normalizedGravity);
+    const bgInterpolatedColor = colorChange('rgb(43,48,92)','rgb(135,206,235)', normalizedGravity);
+
+    // Update the terrain material color
+    terrain.material.uniforms.baseColor.value.set(terrainInterpolatedColor);
+    scene.background.set(bgInterpolatedColor);
+    hole.material.color.set(bgInterpolatedColor);
 }
-function createScoreDisplay() {
-    // Create a canvas for the score
-    scoreCanvas = document.createElement('canvas');
-    scoreCanvas.width = 512; // Adjust resolution
-    scoreCanvas.height = 256;
-    scoreContext = scoreCanvas.getContext('2d');
 
-    // Create a texture from the canvas
-    scoreTexture = new THREE.CanvasTexture(scoreCanvas);
 
-    // Create a plane geometry to display the texture
-    const planeGeometry = new THREE.PlaneGeometry(5, 2); // Adjust size
-    const planeMaterial = new THREE.MeshBasicMaterial({ map: scoreTexture, transparent: true });
-    scorePlane = new THREE.Mesh(planeGeometry, planeMaterial);
-
-    // Position and add to the scene
-    scorePlane.position.set(startCoords.x, startCoords.y, 0); // Adjust position to fit your scene
-    scene.add(scorePlane);
-
-    // Draw the initial score AFTER initializing the texture
-    drawScore();
+function colorChange(color1, color2, t) {
+    const c1 = new THREE.Color(color1);
+    const c2 = new THREE.Color(color2);
+    return c1.lerp(c2, t);
 }
 
 
 function drawScore() {
-    // Clear the canvas
-    scoreContext.clearRect(0, 0, scoreCanvas.width, scoreCanvas.height);
-
-    // Draw background
-    scoreContext.fillStyle = '#000000'; // Black background
-    scoreContext.fillRect(0, 0, scoreCanvas.width, scoreCanvas.height);
-
-    // Draw text
-    scoreContext.fillStyle = '#FFFFFF'; // White text
-    scoreContext.font = '48px Arial'; // Font style and size
-    scoreContext.fillText(`Score: ${score}`, 50, 100); // Position the text
-    scoreContext.fillText(`Multiplier: ${multi}`, 50,200);
-
-    // Update texture
-    scoreTexture.needsUpdate = true;
+    document.getElementById('scoreDisplay').innerText = `Score: ${score}`;
 }
 
+function drawHits() {
+    document.getElementById('hitDisplay').innerText = `Hits: ${hits}`;
+}
+
+function resetBall(){
+    ball.position.set(startCoords.x, startCoords.y, startCoords.z);
+    velocity.set(0,0);
+}
+
+function addHit(){
+    hits += 1;
+}
+
+function resetGame() {
+    while(scene.children.length > 0){
+        scene.remove(scene.children[0]);
+    }
+    randomizeTerrain();
+    resetSandPoints();
+    const slider = document.getElementById("gravitySlider");
+    slider.value = 0.02;  // Assuming the default slider value is 5.0
+    setGravity(-0.02);
+    scene.background.set('rgb(135,206,235)');
+    birdie = false;
+    hits= 0;
+    bumpers = [];
+    boosters = [];
+    drawHits();
+    addObjects();
+    resetBall();
+}
