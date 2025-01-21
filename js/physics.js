@@ -23,7 +23,6 @@ export function getTerrainHeightAt(x) {
         console.error("terrainPoints is empty or undefined.");
         return terrain.position.y;
     }
-
     terrainPoints.forEach(point => {
         if (point.x <= x && (!closestPointLeft || point.x > closestPointLeft.x)) {
             closestPointLeft = point;
