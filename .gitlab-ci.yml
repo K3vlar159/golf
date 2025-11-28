@@ -2,7 +2,7 @@ pages:
   image: alpine
   script:
     - mkdir public
-    - cp -r * public/
+    - cp -r index.html assets js styles.css public/
   artifacts:
     paths:
       - public
