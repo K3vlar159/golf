@@ -15,4 +15,6 @@ The goal is simple: aim, set power, and take as few strokes as possible to get t
 
 - Aim + power-based shooting
 - Basic physics-style ball movement (momentum / friction-style slowdown)
+- Use "booster" and "jumper" power-ups to help you reach the hole
+- Gravity slider
 - **Procedurally generated terrain**, including **water** and **sand** hazards/features
